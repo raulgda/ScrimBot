@@ -57,7 +57,7 @@ function activateScrim(id, msg){
 	for (var i=0; i<team2.length; i++){
 		mes += "<@!"+team2[i]+"> "
 	}
-	var maps = ["Urban", "Outpost", "Woods", "Meltdown", "Office"];
+	var maps = ["Urban", "Outpost", "Woods", "Meltdown", "Office", "Prision", "Canyon"];
 	shuffle(maps);
 	mes+="\n\nI have also chosen the maps for the different rounds you'll be playing, here they go:\n";
 	for (var i=0; i<3; i++){
