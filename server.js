@@ -163,8 +163,7 @@ bot.on('message', msg => {
 							if (json.lista[index].userIDs[i] == msg.author.id)	error = true;
 						}
 						if (!error){
-							var name = msg.guild.members.cache.get(msg.author.id).nickname;
-							if (name == null)	name = msg.author.username;							
+							var name = msg.guild.members.cache.get(msg.author.id).displayName;						
 							json.lista[index].users.push(name);
 							json.lista[index].userIDs.push(msg.author.id);
 							fs.writeFile('./scrims.json', JSON.stringify(json,null,2), () => {});
@@ -235,7 +234,7 @@ bot.on('message', msg => {
 					msg.channel.send('Improper use of command. To see the members list for a scrim please type\n\t!scrim users <id>\nFor more help type\n\t!scrim help');
 				} else {
 					var index;
-					for (index=0; index<json.lista.length; json++){
+					for (index=0; index<json.lista.length; index++){
 						if (json.lista[index].id == args[0])	break;
 					}
 					if (index < json.lista.length){
@@ -248,6 +247,30 @@ bot.on('message', msg => {
 						msg.channel.send("Sorry, I was unable to find scrim "+args[0]+". To see the list of currently active scrims please type\n\t!scrim see\nFor more help type\n\t!scrim help'");
 					}
 				}
+			break;
+			
+			case 'fix':
+				var fecha = args[0].split('/');
+				var hora = args[1].split(':');
+				var date = new Date(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0);
+				var now = new Date;
+				if (date > now){
+					var id = createMatch(args[0], args[1], json);
+					var j = scheduler.scheduleJob(date,function(id,msg){
+						activateScrim(id,msg);
+						}.bind(null,id,msg));
+					jobs.push([id,j]);
+					args = args.splice(2);
+					for (member of msg.guild.members.cache){
+						var name = member[1].displayName;
+						if (args.includes(name)){
+							json.lista[json.lista.length-1].users.push(name);
+							json.lista[json.lista.length-1].userIDs.push(member[0]);
+						}
+					}
+					fs.writeFile('./scrims.json', JSON.stringify(json,null,2), () => {});
+				}
+				
 			break;
 				
 			default:
