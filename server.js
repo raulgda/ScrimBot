@@ -114,7 +114,7 @@ bot.on('message', msg => {
 							activateScrim(id,msg);
 							}.bind(null,id,msg));
 						jobs.push([id,j]);
-						msg.channel.send("New scrim created with id  = "+id+"\nScrim is programmed for "+args[0]+" at "+args[1]+" Spanish time (use google to get time at your location)\nRemember currently there are no users signed up for this scrim. To sign yourself up please type:\n\t!scrim addme <scrim\'s id>\n@everyone\nBe fast, or I'll have to join myself and use minigun muahaha!");
+						msg.channel.send("New scrim created with id  = "+id+"\nScrim is programmed for "+args[0]+" at "+args[1]+" UTC (use google to get time at your location)\nRemember currently there are no users signed up for this scrim. To sign yourself up please type:\n\t!scrim addme <scrim\'s id>\n@everyone\nBe fast, or I'll have to join myself and use minigun muahaha!");
 					} else {
 						msg.channel.send("I'm sorry, I don't know how to time travel (yet!). Please specify a scrim date in the future");
 					}
@@ -251,7 +251,7 @@ bot.on('message', msg => {
 			break;
 				
 			default:
-				msg.channel.send("This is the list of available commands. Please remember they all must start by !scrim if you want me to be able to read them\n\nnew <date> <time>\tCreates a new scrim. <date> must follow the format dd/mm/yyyy and <time> must be hh:mm 24H format Spanish Local Time\nremove <scrim\'s id>\tDeletes the specified scrim from the database\nsee\tShows a list with all currently active scrims, their ids, datas and times\nusers <scrim\'s id>\tShows which users have signed ut for the specified scrim\naddme <scrim\'s id>\tAdd yourself to the specified scrim\ndelme <scrim\'s id>\t Removes yourself from specified scrim\nhelp\tShows this message");
+				msg.channel.send("This is the list of available commands. Please remember they all must start by !scrim if you want me to be able to read them\n\nnew <date> <time>\tCreates a new scrim. <date> must follow the format dd/mm/yyyy and <time> must be hh:mm 24H format UTC\nremove <scrim\'s id>\tDeletes the specified scrim from the database\nsee\tShows a list with all currently active scrims, their ids, datas and times\nusers <scrim\'s id>\tShows which users have signed ut for the specified scrim\naddme <scrim\'s id>\tAdd yourself to the specified scrim\ndelme <scrim\'s id>\t Removes yourself from specified scrim\nhelp\tShows this message");
 
 
 		}
