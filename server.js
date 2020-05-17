@@ -222,7 +222,7 @@ bot.on('message', msg => {
 				} else {
 					var mes = "This is the list of currently active scrims:\n";
 					for (var i=0; i<json.lista.length; i++){
-						mes += "\tID: "+json.lista[i].id+"\tDATE: "+json.lista[i].date+"\tTIME: "+json.lista[i].time+"\n"
+						mes += "\tID: "+json.lista[i].id+"\tDATE: "+json.lista[i].date+"\tTIME: "+json.lista[i].time+" utc\n"
 					}
 					mes += "To see which users are participating on each scrim, please type\n\t!scrim users <id>"
 					msg.channel.send(mes);
