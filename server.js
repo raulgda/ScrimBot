@@ -99,6 +99,8 @@ bot.on('ready', function (evt) {
 
 
 bot.on('message', function (user, userID, channelID, message, evt) {
+	console.log(message);
+	console.log(evt);
 	if (message.substring(0, 7) == '!scrim ') {
 		var args = message.substring(7).split(' ');
 		var cmd = args[0];
