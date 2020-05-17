@@ -81,19 +81,24 @@ function activateScrim(id, json, bot, channelID){
 	return;
 }
 
-
-var Discord = require('discord.io');
+require('dotenv').config();
+var Discord = require('discord.js');
 var scheduler = require('node-schedule');
-var auth = 'NzEwODU5ODAyMTcwODg0MjI3.XsCFcQ.ktnPU7IEj6ghQFyC7pS08WLe97E';
+//var auth = 'NzEwODU5ODAyMTcwODg0MjI3.XsCFcQ.ktnPU7IEj6ghQFyC7pS08WLe97E';
 var fs = require('fs');
+
 var json = require('./scrims.json');
 var jobs = []
 
-var bot = new Discord.Client({ token: auth, autorun: true });
+//var bot = new Discord.Client({ token: auth, autorun: true });
+var bot = new Discord.Client();
+
+bot.login(process.env.TOKEN);
 
 bot.on('ready', function (evt) {
-	console.log("Bot is up and running");
+	console.log(bot.user.username+" is up and running");
 });
+
 
 bot.on('message', function (user, userID, channelID, message, evt) {
 	if (message.substring(0, 7) == '!scrim ') {
