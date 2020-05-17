@@ -95,7 +95,17 @@ bot.on('ready', () => {
 bot.on('message', msg => {
 
 	if (msg.content.substring(0, 7) == '!scrim ' && msg.channel.name == 'scrim') {
-		var args = msg.content.substring(7).split(' ');
+		var temp = msg.content.split(" \"");
+		var args = [];
+		for (var i=0; i< temp.length; i++){
+			if (temp[i].includes('\"')){
+				args.push(temp[i].replace('\"',''));
+			} else {
+				for (s of temp[i].split(' ')){
+					args.push(s);
+				}
+			}
+		}
 		var cmd = args[0];
 		args = args.splice(1);
 		switch(cmd) {
@@ -261,6 +271,7 @@ bot.on('message', msg => {
 						}.bind(null,id,msg));
 					jobs.push([id,j]);
 					args = args.splice(2);
+					console.log(
 					for (member of msg.guild.members.cache){
 						var name = member[1].displayName;
 						if (args.includes(name)){
