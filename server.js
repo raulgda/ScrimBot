@@ -84,13 +84,12 @@ function activateScrim(id, json, bot, channelID){
 
 var Discord = require('discord.io');
 var scheduler = require('node-schedule');
-var auth = require('./auth.json');
+var auth = 'NzEwODU5ODAyMTcwODg0MjI3.XsCFcQ.ktnPU7IEj6ghQFyC7pS08WLe97E';
 var fs = require('fs');
 var json = require('./scrims.json');
 var jobs = []
 
-var bot = new Discord.Client({ token: auth.token, autorun: true });
-//var guild = bot.guilds.get('710862896556408944');
+var bot = new Discord.Client({ token: auth, autorun: true });
 
 bot.on('ready', function (evt) {
 	console.log("Bot is up and running");
