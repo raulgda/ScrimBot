@@ -186,7 +186,7 @@ bot.on('message', msg => {
 					msg.channel.send('Improper use of command. To remove yourself from the scrim please type\n\t!scrim delme <id> \nIf you want to see a list of active scrims, please type\n\t!scrim see\nFor more help type\n\t!scrim help');
 				} else {
 					var index;
-					for (index=0; index<json.lista.length; json++){
+					for (index=0; index<json.lista.length; index++){
 						if (json.lista[index].id == args[0])	break;
 					}
 					if (index < json.lista.length){
