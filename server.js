@@ -106,8 +106,8 @@ bot.on('message', msg => {
 				}
 			}
 		}
-		var cmd = args[0];
-		args = args.splice(1);
+		var cmd = args[1];
+		args = args.splice(2);
 		switch(cmd) {
 			// Add a new scrim
 			case 'new':
@@ -271,7 +271,6 @@ bot.on('message', msg => {
 						}.bind(null,id,msg));
 					jobs.push([id,j]);
 					args = args.splice(2);
-					console.log(
 					for (member of msg.guild.members.cache){
 						var name = member[1].displayName;
 						if (args.includes(name)){
