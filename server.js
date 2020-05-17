@@ -84,13 +84,11 @@ function activateScrim(id, json, bot, channelID){
 require('dotenv').config();
 var Discord = require('discord.js');
 var scheduler = require('node-schedule');
-//var auth = 'NzEwODU5ODAyMTcwODg0MjI3.XsCFcQ.ktnPU7IEj6ghQFyC7pS08WLe97E';
 var fs = require('fs');
 
 var json = require('./scrims.json');
 var jobs = []
 
-//var bot = new Discord.Client({ token: auth, autorun: true });
 var bot = new Discord.Client();
 
 bot.login(process.env.TOKEN);
