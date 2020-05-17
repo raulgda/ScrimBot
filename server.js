@@ -251,7 +251,7 @@ bot.on('message', msg => {
 			break;
 				
 			default:
-				msg.channel.send("This is the list of available commands. Please remember they all must start by !scrim if you want me to be able to read them\n\nnew <date> <time>\tCreates a new scrim. <date> must follow the format dd/mm/yyyy and <time> must be hh:mm 24H format UTC\nremove <id>\tDeletes the specified scrim from the database\nsee\tShows a list with all currently active scrims, their ids, datas and times\nusers <id>\tShows which users have signed ut for the specified scrim\naddme <id>\tAdd yourself to the specified scrim\ndelme <id>\t Removes yourself from specified scrim\nhelp\tShows this message");
+				msg.channel.send("This is the list of available commands. Please remember they all must start by !scrim if you want me to be able to read them\n\nnew <date> <time>\tCreates a new scrim. <date> must follow the format dd/mm/yyyy and <time> must be hh:mm 24H format UTC\nremove <id>\tDeletes the specified scrim from the database. IT DELETES THE WHOLE SCRIM, BE CAREFUL\nsee\tShows a list with all currently active scrims, their ids, datas and times\nusers <id>\tShows which users have signed ut for the specified scrim\naddme <id>\tAdd yourself to the specified scrim\ndelme <id>\t Removes yourself from specified scrim. USE THIS ONE TO DELETE YOURSELF FROM THE SCRIM\nhelp\tShows this message");
 
 
 		}
