@@ -114,7 +114,7 @@ bot.on('message', msg => {
 							activateScrim(id,msg);
 							}.bind(null,id,msg));
 						jobs.push([id,j]);
-						msg.channel.send("New scrim created with id  = "+id+"\nScrim is programmed for "+args[0]+" at "+args[1]+" UTC (use google to get time at your location)\nRemember currently there are no users signed up for this scrim. To sign yourself up please type:\n\t!scrim addme <scrim\'s id>\n@everyone\nBe fast, or I'll have to join myself and use minigun muahaha!");
+						msg.channel.send("New scrim created with id  = "+id+"\nScrim is programmed for "+args[0]+" at "+args[1]+" UTC (use google to get time at your location)\nRemember currently there are no users signed up for this scrim. To sign yourself up please type:\n\t!scrim addme  "+id+"\n@everyone\nBe fast, or I'll have to join myself and use minigun muahaha!");
 					} else {
 						msg.channel.send("I'm sorry, I don't know how to time travel (yet!). Please specify a scrim date in the future");
 					}
@@ -124,7 +124,7 @@ bot.on('message', msg => {
 			//Remove a scrim
 			case 'remove':
 				if (args.length != 1){
-					msg.channel.send('Improper use of command. To delete a new scrim please type\n\t!scrim remove <scrim\'s id> \nIf you want to see a list of active scrims, please type\n\t!scrim see\nFor more help type\n\t!scrim help');
+					msg.channel.send('Improper use of command. To delete a new scrim please type\n\t!scrim remove <id> \nIf you want to see a list of active scrims, please type\n\t!scrim see\nFor more help type\n\t!scrim help');
 				} else {
 					var data = removeMatch(args[0], json);
 					if (data != null){
@@ -149,7 +149,7 @@ bot.on('message', msg => {
 			//Add a user
 			case 'addme':
 				if (args.length != 1){
-					msg.channel.send('Improper use of command. To add yourself to the scrim please type\n\t!scrim addme <scrim\'s id> \nIf you want to see a list of active scrims, please type\n\t!scrim see\nFor more help type\n\t!scrim help');
+					msg.channel.send('Improper use of command. To add yourself to the scrim please type\n\t!scrim addme <id> \nIf you want to see a list of active scrims, please type\n\t!scrim see\nFor more help type\n\t!scrim help');
 				} else {
 					var index;
 					for (index=0; index<json.lista.length; json++){
@@ -183,7 +183,7 @@ bot.on('message', msg => {
 			//Remove a user
 			case 'delme':
 				if (args.length != 1){
-					msg.channel.send('Improper use of command. To remove yourself from the scrim please type\n\t!scrim delme <scrim\'s id> \nIf you want to see a list of active scrims, please type\n\t!scrim see\nFor more help type\n\t!scrim help');
+					msg.channel.send('Improper use of command. To remove yourself from the scrim please type\n\t!scrim delme <id> \nIf you want to see a list of active scrims, please type\n\t!scrim see\nFor more help type\n\t!scrim help');
 				} else {
 					var index;
 					for (index=0; index<json.lista.length; json++){
@@ -224,7 +224,7 @@ bot.on('message', msg => {
 					for (var i=0; i<json.lista.length; i++){
 						mes += "\tID: "+json.lista[i].id+"\tDATE: "+json.lista[i].date+"\tTIME: "+json.lista[i].time+"\n"
 					}
-					mes += "To see which users are participating on each scrim, please type\n\t!scrim users <scrim\'s id>"
+					mes += "To see which users are participating on each scrim, please type\n\t!scrim users <id>"
 					msg.channel.send(mes);
 				}
 			break;
@@ -232,7 +232,7 @@ bot.on('message', msg => {
 			//See signed up users
 			case 'users':
 				if (args.length != 1){
-					msg.channel.send('Improper use of command. To see the members list for a scrim please type\n\t!scrim users <scrim\'s id>\nFor more help type\n\t!scrim help');
+					msg.channel.send('Improper use of command. To see the members list for a scrim please type\n\t!scrim users <id>\nFor more help type\n\t!scrim help');
 				} else {
 					var index;
 					for (index=0; index<json.lista.length; json++){
@@ -251,7 +251,7 @@ bot.on('message', msg => {
 			break;
 				
 			default:
-				msg.channel.send("This is the list of available commands. Please remember they all must start by !scrim if you want me to be able to read them\n\nnew <date> <time>\tCreates a new scrim. <date> must follow the format dd/mm/yyyy and <time> must be hh:mm 24H format UTC\nremove <scrim\'s id>\tDeletes the specified scrim from the database\nsee\tShows a list with all currently active scrims, their ids, datas and times\nusers <scrim\'s id>\tShows which users have signed ut for the specified scrim\naddme <scrim\'s id>\tAdd yourself to the specified scrim\ndelme <scrim\'s id>\t Removes yourself from specified scrim\nhelp\tShows this message");
+				msg.channel.send("This is the list of available commands. Please remember they all must start by !scrim if you want me to be able to read them\n\nnew <date> <time>\tCreates a new scrim. <date> must follow the format dd/mm/yyyy and <time> must be hh:mm 24H format UTC\nremove <id>\tDeletes the specified scrim from the database\nsee\tShows a list with all currently active scrims, their ids, datas and times\nusers <id>\tShows which users have signed ut for the specified scrim\naddme <id>\tAdd yourself to the specified scrim\ndelme <id>\t Removes yourself from specified scrim\nhelp\tShows this message");
 
 
 		}
