@@ -59,7 +59,7 @@ function activateScrim(id, msg){
 	for (var i=0; i<team2.length; i++){
 		mes += "<@!"+team2[i]+"> "
 	}
-	var maps = ["Urban", "Outpost", "Woods", "Meltdown", "Office", "Prision", "Canyon"];
+	var maps = ["Urban", "Woods", "Meltdown"];
 	shuffle(maps);
 	mes+="\n\nI have also chosen the maps for the different rounds you'll be playing, here they go:\n";
 	for (var i=0; i<3; i++){
@@ -183,15 +183,19 @@ bot.on('message', msg => {
 					}
 					if (index < json.lista.length){
 						var error = json.lista[index].users.includes(msg.author.id);
-						if (!error){					
-							json.lista[index].users.push(msg.author.id);
-							fs.writeFile('./scrims.json', JSON.stringify(json,null,2), () => {});
-							users = "";
-							for (mem of json.lista[index].users){
-								users += "\t"+msg.guild.members.cache.get(mem).displayName+"\n"
+						if (!error){
+							if (json.lista[index].users.length>=8){
+								msg.channel.send("I'm so sorry, this scrim already has 8 peolpe signed up.\nDon't worry though, type this command to check if there is any other scrmi avalaible\n\t!scrim see\nAnd use this command to see if there is still space on whichever scrim\n\t!scrim users <id>");
+							} else {					
+								json.lista[index].users.push(msg.author.id);
+								fs.writeFile('./scrims.json', JSON.stringify(json,null,2), () => {});
+								users = "";
+								for (mem of json.lista[index].users){
+									users += "\t"+msg.guild.members.cache.get(mem).displayName+"\n"
+								}
+								console.log(makeBackup(json));
+								msg.channel.send("You have succesfully being added to scrim "+json.lista[index].id+"\nThis is the list of current members for this scrim:\n"+users);
 							}
-							console.log(makeBackup(json));
-							msg.channel.send("You have succesfully being added to scrim "+json.lista[index].id+"\nThis is the list of current members for this scrim:\n"+users);
 						} else {
 							msg.channel.send("Don't be greedy, you were already on this scrim!");
 						}
