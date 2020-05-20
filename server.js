@@ -59,22 +59,25 @@ bot.login(process.env.TOKEN);
 bot.on('ready', () => {
 	console.log(bot.user.username+" is up and running");
 	database.ref().once('value').then(function(snap){
-		snap.forEach(function(child){
-			var val = child.val();
-			var fecha = val.date.split('/');
-			var hora = val.time.split(':');
-			var date = Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0);
-			if (date > Date.now()){
-				var job = scheduler.scheduleJob(date,function(id,channel){
-					activateScrim(id,channel);
-					}.bind(null,id,bot.channels.cache.get('705850717218406420'));
-//				var job = scheduler.scheduleJob(date,function(id,channel){
-//					activateScrim(id,channel);
-//					}.bind(null,child.key,bot.channels.cache.get('711680341550694471')));
-				jobs.push([child.key,job]);
-			}
-		});
-		console.log(jobs.length+"/"+snap.numChildren()+" scrims were succesfully reschedulled");
+		if (snap.exists(){
+			snap.forEach(function(child){
+				var val = child.val();
+				var fecha = val.date.split('/');
+				var hora = val.time.split(':');
+				var date = Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0);
+				if (date > Date.now()){
+					var job = scheduler.scheduleJob(date,function(id,channel){
+						activateScrim(id,channel);
+						}.bind(null,id,bot.channels.cache.get('705850717218406420'));
+	//				var job = scheduler.scheduleJob(date,function(id,channel){
+	//					activateScrim(id,channel);
+	//					}.bind(null,child.key,bot.channels.cache.get('711680341550694471')));
+					jobs.push([child.key,job]);
+				}
+			});
+			console.log(jobs.length+"/"+snap.numChildren()+" jobs were succesfully reschedulled");
+		}
+		console.log("No jobs to reschedulle");
 	});
 });
 
