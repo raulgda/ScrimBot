@@ -59,7 +59,7 @@ bot.login(process.env.TOKEN);
 bot.on('ready', () => {
 	console.log(bot.user.username+" is up and running");
 	database.ref().once('value').then(function(snap){
-		if (snap.exists(){
+		if (snap.exists()){
 			snap.forEach(function(child){
 				var val = child.val();
 				var fecha = val.date.split('/');
