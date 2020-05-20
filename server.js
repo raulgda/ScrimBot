@@ -16,8 +16,21 @@ function activateScrim(id, channel){
 						mes += "\t<@!"+user+">\n"
 					}
 					var maps = shuffle(["Urban", "Woods", "Meltdown"]);
-					mes += "I hope you've trained hard, because here are the maps you'll be playing on:\n\tRound 1: "+maps[0]+"\n\tRound 2: "+maps[1]+"\n\tRound 3: "+maps[2]+"\n\n";
-					mes += "Here are some INSTRUCTIONS about how to proceed. <@!"+snap.val()[0]+"> will create a lobby called LaG Scrim, password will be lagwins, I say it again:\n\tName: LaG Scrim\n\tPassword: lagwins\nAll players must get ready, but none shall join until 5 minutes from now. That's so we can all start at the same time. So get ready, have the password already typed in, but don't click submit until 5 minutes from now\n\nSaid that, all the best of luck to you all, and let the best LaG win!\n(If only I could join, I'll wreck all of you noobs, minigun for the win)";
+					mes += "\nI hope you've trained hard, because here are the maps you'll be playing on:\n\tRound 1: "+maps[0]+"\n\tRound 2: "+maps[1]+"\n\tRound 3: "+maps[2]+"\n\n";
+					var host = null;
+					if (snap.val().includes("690593135151022130"))	host = "690593135151022130";
+					else 	host = snap.val()[0];
+					var team2 = shuffle(snap.val());
+					var team1 = team2.splice(team2.length/2);
+					mes += "Here are some INSTRUCTIONS about how to proceed:\n1. <@!"+host+"> will create a lobby with the following credentials:\n\tName: LaG Scrim\n\tPassword: lagwins\n2. He will deploy, and type in chat the follwing comand:\n\t/ts 0\n3. Once that's done, he'll notify the rest of the players they can join now.\n4. When you do join , you need to check up if you are in the proper teams. The easiest way is to assign a leader for each team, and each player will check if they are whit their corresponding leaders. \n5. Once teams are properly set up, <@!"+host+"> will type in the chat the following command:\n\t/ts 1\n\nI've chosen random teams, in case you don't have any in mind:\n\tTeam 1: ";
+					for (var i=0; i<team1.length; i++){
+						mes += "<@!"+team1[i]+">  ";
+					}
+					mes += "\n\tTeam 2: ";
+					for (var i=0; i<team2.length; i++){
+						mes += "<@!"+team2[i]+">  ";
+					}
+					mes += "\nteam leaders will be the first person of each team.\n\nSaid that, all the best of luck to you all, and let the best LaG win!";
 					channel.send(mes);
 				} else {
 					channel.send("You told me a scrim was happening today, but none of you lazy asses signed up for it! Me and my minigun will be leaving LaG if this continues, what a shame");
@@ -85,7 +98,7 @@ bot.on('ready', () => {
 
 bot.on('message', msg => {
 
-	if (msg.content.substring(0, 7) == '!scrim ' && msg.channel.name == 'scrim' && msg.author.id != bot.user.id) {
+	if (msg.content.substring(0, 7) == '!scram ' && msg.channel.name == 'scrim' && msg.author.id != bot.user.id) {
 		var args = msg.content.split(" ");
 		var cmd = args[1];
 		args = args.splice(2);
