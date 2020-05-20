@@ -68,7 +68,7 @@ bot.on('ready', () => {
 				if (date > Date.now()){
 					var job = scheduler.scheduleJob(date,function(id,channel){
 						activateScrim(id,channel);
-						}.bind(null,id,bot.channels.cache.get('705850717218406420'));
+						}.bind(null,id,bot.channels.cache.get('705850717218406420')));
 	//				var job = scheduler.scheduleJob(date,function(id,channel){
 	//					activateScrim(id,channel);
 	//					}.bind(null,child.key,bot.channels.cache.get('711680341550694471')));
