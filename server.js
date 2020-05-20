@@ -76,8 +76,9 @@ bot.on('ready', () => {
 				}
 			});
 			console.log(jobs.length+"/"+snap.numChildren()+" jobs were succesfully reschedulled");
+		} else {
+			console.log("No jobs to reschedulle");
 		}
-		console.log("No jobs to reschedulle");
 	});
 });
 
