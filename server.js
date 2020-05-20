@@ -98,7 +98,7 @@ bot.on('ready', () => {
 
 bot.on('message', msg => {
 
-	if (msg.content.substring(0, 7) == '!scram ' && msg.channel.name == 'scrim' && msg.author.id != bot.user.id) {
+	if (msg.content.substring(0, 7) == '!scrim ' && msg.channel.name == 'scrim' && msg.author.id != bot.user.id) {
 		var args = msg.content.split(" ");
 		var cmd = args[1];
 		args = args.splice(2);
