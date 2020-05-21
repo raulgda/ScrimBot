@@ -265,8 +265,6 @@ bot.on('message', msg => {
 							} else {
 								var waiters = snap.val();
 								var users = waiters.splice(0,8);
-								console.log(users);
-								console.log(waiters);
 								mes = "This is the participant list for scrim "+args[0]+"\n";
 								for (user of users){
 									mes += "\t"+msg.guild.members.cache.get(user).displayName+"\n";
