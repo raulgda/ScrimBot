@@ -11,9 +11,9 @@ function activateScrim(id, channel){
 		if (snap.exists()){
 			database.ref(id+'/users').once('value').then(function(snap){
 				if (snap.exists()){
-					waiters = snap.val()
-					players = waiters.splice(0,8)
-					mes = "It's scrim time! Oh my god, I'm so nervous, who will win?\nThese are the heroes representing LaG today:\n"
+					waiters = snap.val();
+					players = waiters.splice(0,8);
+					mes = "It's scrim time! Oh my god, I'm so nervous, who will win?\nThese are the heroes representing LaG today:\n";
 					for (user of players){
 						mes += "\t<@!"+user+">\n"
 					}
@@ -34,9 +34,9 @@ function activateScrim(id, channel){
 					}
 					mes += "\nteam leaders will be the first person of each team.\n\nSaid that, all the best of luck to you all, and let the best LaG win!";
 					if (waiters.length>0){
-						mew += "\n\nOh, and also, these people are still in the waiting list for this scrim. If any player fail last minute, contact them\n"
+						mew += "\n\nOh, and also, these people are still in the waiting list for this scrim. If any player fail last minute, contact them\n";
 						for (user of players){
-							mes += "\t<@!"+user+">\n"
+							mes += "\t<@!"+user+">\n";
 						}
 					}
 					channel.send(mes);
@@ -240,7 +240,11 @@ bot.on('message', msg => {
 					} else {
 						mes += "This is the list of current scrims:\n";
 						snap.forEach(function(child){
-							mes += "\tID: "+child.key+"\tDATE: "+child.val().date+"\tTIME: "+child.val().time+"\tPlayers: "+child.val().users.length+"\n";
+							var pl = 0;
+							if (child.val().users != null){
+								pl = min(8,child.val().users.length);
+							} 
+							mes += "\tID: "+child.key+"\tDATE: "+child.val().date+"\tTIME: "+child.val().time+"\tPlayers: "+pl+"\n";
 						});
 						mes += "(Remember times follows UTC standard, use google to check your local time equivalence)\nTo see which users have joined a scrim, use the command\n\t!scrim users [id]";
 					}
