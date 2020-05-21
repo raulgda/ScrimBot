@@ -218,7 +218,7 @@ bot.on('message', msg => {
 								}
 								database.ref(args[0]+'/users').set(temp);
 								if (main && users.length>8){
-									msg.channel.send("Okay, I've removed you from scrim "+args[0]+"\nCongrats <@!"+temp[7]+"> now you are on the main list for scrim "+args[0]+".\nUse this command to check the people you'll be playing with\n\t!scrim users "+args[0]);
+									msg.channel.send("Okay, I've removed you from scrim "+args[0]+"\nCongrats <@!"+temp[7]+">, now you are on the main list for scrim "+args[0]+".\nUse this command to check the people you'll be playing with\n\t!scrim users "+args[0]);
 								} else {
 									msg.channel.send("Okay, I've removed you from scrim "+args[0]+". But it makes me so sad you are leaving us :sob:");
 								}
