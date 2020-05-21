@@ -71,7 +71,6 @@ var database = admin.database();
 var Discord = require('discord.js');
 var scheduler = require('node-schedule');
 var fs = require('fs');
-var json = require('./scrims.json');
 var jobs = []
 var bot = new Discord.Client();
 
