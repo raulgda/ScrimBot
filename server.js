@@ -241,7 +241,8 @@ bot.on('message', msg => {
 						snap.forEach(function(child){
 							var pl = 0;
 							if (child.val().users != null){
-								pl = min(8,child.val().users.length);
+								if (child.val().users.length<8) pl=child.val().users.length;
+								else pl = 8
 							} 
 							mes += "\tID: "+child.key+"\tDATE: "+child.val().date+"\tTIME: "+child.val().time+"\tPlayers: "+pl+"\n";
 						});
