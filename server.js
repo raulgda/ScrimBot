@@ -11,16 +11,18 @@ function activateScrim(id, channel){
 		if (snap.exists()){
 			database.ref(id+'/users').once('value').then(function(snap){
 				if (snap.exists()){
+					waiters = snap.val()
+					players = waiters.splice(0,8)
 					mes = "It's scrim time! Oh my god, I'm so nervous, who will win?\nThese are the heroes representing LaG today:\n"
-					for (user of snap.val()){
+					for (user of players){
 						mes += "\t<@!"+user+">\n"
 					}
 					var maps = shuffle(["Urban", "Woods", "Meltdown"]);
 					mes += "\nI hope you've trained hard, because here are the maps you'll be playing on:\n\tRound 1: "+maps[0]+"\n\tRound 2: "+maps[1]+"\n\tRound 3: "+maps[2]+"\n\n";
 					var host = null;
-					if (snap.val().includes("690593135151022130"))	host = "690593135151022130";
-					else 	host = snap.val()[0];
-					var team2 = shuffle(snap.val());
+					if (players.includes("690593135151022130"))	host = "690593135151022130";
+					else 	host = players[0];
+					var team2 = shuffle(players);
 					var team1 = team2.splice(team2.length/2);
 					mes += "Here are some INSTRUCTIONS about how to proceed:\n1. <@!"+host+"> will create a lobby with the following credentials:\n\tName: LaG Scrim\n\tPassword: lagwins\n2. He will deploy, and type in chat the follwing comand:\n\t/ts 0\n3. Once that's done, he'll notify the rest of the players they can join now.\n4. When you do join , you need to check up if you are in the proper teams. The easiest way is to assign a leader for each team, and each player will check if they are whit their corresponding leaders. \n5. Once teams are properly set up, <@!"+host+"> will type in the chat the following command:\n\t/ts 1\n\nI've chosen random teams, in case you don't have any in mind:\n\tTeam 1: ";
 					for (var i=0; i<team1.length; i++){
@@ -31,6 +33,12 @@ function activateScrim(id, channel){
 						mes += "<@!"+team2[i]+">  ";
 					}
 					mes += "\nteam leaders will be the first person of each team.\n\nSaid that, all the best of luck to you all, and let the best LaG win!";
+					if (waiters.length>0){
+						mew += "\n\nOh, and also, these people are still in the waiting list for this scrim. If any player fail last minute, contact them\n"
+						for (user of players){
+							mes += "\t<@!"+user+">\n"
+						}
+					}
 					channel.send(mes);
 				} else {
 					channel.send("You told me a scrim was happening today, but none of you lazy asses signed up for it! Me and my minigun will be leaving LaG if this continues, what a shame");
@@ -166,18 +174,20 @@ bot.on('message', msg => {
 						database.ref(args[0]+'/users').once('value').then(function(snap){
 							var users = snap.val();
 							if (users == null)	users = [];
-							if (users.length >= 8){
-								msg.channel.send("This scrim has already reached its 8 player limit. Check other scrims by typing:\n\t!scrim see");
-							} else if (users.includes(msg.author.id)){
+							if (users.includes(msg.author.id)){
 								msg.channel.send("Don't be greedy, you were already in this scrim!");
 							} else  {
 								users.push(msg.author.id);
 								database.ref(args[0]+'/users').set(users);
-								mes = "Congratulations! You've joined this scrim. This is the participants list for scrim "+args[0]+":\n";
-								for (user of users){
-									mes += "\t"+msg.guild.members.cache.get(user).displayName+"\n"
+								if (users.length >= 8){
+									msg.channel.send("As this scrim has already 8 people playing, I've put you in the waiting list. In case anyone leaves, i'll make sure to move you to the main list");
+								} else {
+									mes = "Congratulations! You've joined this scrim. These are the participants for scrim "+args[0]+":\n";
+									for (user of users){
+										mes += "\t"+msg.guild.members.cache.get(user).displayName+"\n"
+									}
+									msg.channel.send(mes);
 								}
-								msg.channel.send(mes);
 							}
 						});
 					} else {
@@ -200,11 +210,19 @@ bot.on('message', msg => {
 								msg.channel.send("You weren't on this scrim in the first place. Are you trying to mess with me?\nHA! You thought you could trick me...");
 							} else {
 								var temp = [];
-								for (user of users){
-									if (user != msg.author.id)	temp.push(user);
+								var main = false;
+								for (var i=0; i<users.length; i++){
+									if (users[i] != msg.author.id){
+										temp.push(users[i]);
+											if (i<8)	main=true;
+									}
 								}
 								database.ref(args[0]+'/users').set(temp);
-								msg.channel.send("Okay... I've removed you from scrim "+args[0]+"... But it makes me so sad you are leaving us :sob:");
+								if (main && users.length<=8){
+									msg.channel.send("Okay, I've removed you from scrim "+args[0]+"\nCongrats <@!"+temp[7]+"> now you are on the main list for scrim "+args[0]+".\n Use this command to check the people you'll be playing with\n\t!scrim users "+args[0]);
+								} else {
+									msg.channel.send("Okay, I've removed you from scrim "+args[0]+". But it makes me so sad you are leaving us :sob:");
+								}
 							}
 						});
 					} else {
@@ -222,7 +240,7 @@ bot.on('message', msg => {
 					} else {
 						mes += "This is the list of current scrims:\n";
 						snap.forEach(function(child){
-							mes += "\tID: "+child.key+"\tDATE: "+child.val().date+"\tTIME: "+child.val().time+"\n";
+							mes += "\tID: "+child.key+"\tDATE: "+child.val().date+"\tTIME: "+child.val().time+"\tPlayers: "+child.val().users.length+"\n";
 						});
 						mes += "(Remember times follows UTC standard, use google to check your local time equivalence)\nTo see which users have joined a scrim, use the command\n\t!scrim users [id]";
 					}
@@ -241,13 +259,21 @@ bot.on('message', msg => {
 							if (!snap.exists()) {
 								msg.channel.send("Oh no! This scrim is empty. be the first to join by typing\n\t!scrim join "+args[0]);
 							} else {
-								var users = snap.val();
+								var waiters = snap.val();
+								var users = waiters.splice(0,8);
+								console.log(users);
+								console.log(waiters);
 								mes = "This is the participant list for scrim "+args[0]+"\n";
 								for (user of users){
-									mes += "\t"+msg.guild.members.cache.get(user).displayName+"\n"
+									mes += "\t"+msg.guild.members.cache.get(user).displayName+"\n";
 								}
 								if (users.length < 8) {
 									mes += "Would you like to join us? Just type\n\t!scrim join "+args[0];
+								} else if (waiters.length > 0) {
+									mes += "And these are the people on the waiting list, in case some player fails\n";
+									for (user of waiters) {
+										mes += "\t"+msg.guild.members.cache.get(user).displayName+"\n";
+									}
 								}
 								msg.channel.send(mes);
 							}
