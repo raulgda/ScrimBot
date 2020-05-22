@@ -19,9 +19,7 @@ function activateScrim(id, channel){
 					}
 					var maps = shuffle(["Urban", "Woods", "Meltdown"]);
 					mes += "\nI hope you've trained hard, because here are the maps you'll be playing on:\n\tRound 1: "+maps[0]+"\n\tRound 2: "+maps[1]+"\n\tRound 3: "+maps[2]+"\n\n";
-					var host = null;
-					if (players.includes("690593135151022130"))	host = "690593135151022130";
-					else 	host = players[0];
+					var host = players[0];
 					var team2 = shuffle(players);
 					var team1 = team2.splice(team2.length/2);
 					mes += "Here are some INSTRUCTIONS about how to proceed:\n1. <@!"+host+"> will create a lobby with the following credentials:\n\tName: LaG Scrim\n\tPassword: lagwins\n2. He will deploy, and type in chat the follwing comand:\n\t/ts 0\n3. Once that's done, he'll notify the rest of the players they can join now.\n4. When you do join , you need to check up if you are in the proper teams. The easiest way is to assign a leader for each team, and each player will check if they are whit their corresponding leaders. \n5. Once teams are properly set up, <@!"+host+"> will type in the chat the following command:\n\t/ts 1\n\nI've chosen random teams, in case you don't have any in mind:\n\tTeam 1: ";
