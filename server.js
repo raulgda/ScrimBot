@@ -32,7 +32,7 @@ function activateScrim(id, channel){
 					}
 					mes += "\nteam leaders will be the first person of each team.\n\nSaid that, all the best of luck to you all, and let the best LaG win!";
 					if (waiters.length>0){
-						mew += "\n\nOh, and also, these people are still in the waiting list for this scrim. If any player fail last minute, contact them\n";
+						mes += "\n\nOh, and also, these people are still in the waiting list for this scrim. If any player fail last minute, contact them\n";
 						for (user of players){
 							mes += "\t<@!"+user+">\n";
 						}
