@@ -176,7 +176,7 @@ bot.on('message', msg => {
 							} else  {
 								users.push(msg.author.id);
 								database.ref(args[0]+'/users').set(users);
-								if (users.length >= 8){
+								if (users.length > 8){
 									msg.channel.send("As this scrim has already 8 people playing, I've put you in the waiting list. In case anyone leaves, i'll make sure to move you to the main list");
 								} else {
 									mes = "Congratulations! You've joined this scrim. These are the participants for scrim "+args[0]+":\n";
