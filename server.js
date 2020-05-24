@@ -18,7 +18,7 @@ function activateScrim(id, channel, guild){
 					for (user of players){
 						if (getRole(user,guild) > ma){
 							host = user;
-							ma = getRole(user,msg);
+							ma = getRole(user,guild);
 						}
 					}
 					mes = "It's scrim time! Oh my god, I'm so nervous, who will win?";
@@ -125,7 +125,7 @@ bot.on('ready', () => {
 				if (date > Date.now()){
 					//Main code
 					var job1 = scheduler.scheduleJob(date,function(id,channel){
-						activateScrim(id,channel);
+						activateScrim(id,channel,guild);
 						}.bind(null,child.key,bot.channels.cache.get('705850717218406420'),bot.guilds.cache.get('695900254733729903')));
 					var job2 = scheduler.scheduleJob(date-15*60000,function(id,channel){
 						confirmScrim(id,channel);
@@ -162,7 +162,7 @@ bot.on('message', msg => {
 					msg.channel.send("You need to specify the date and time of the scrim\n\t!scrim create [date] [time]\nRemember, time follows UTC standard");
 					break;
 				}
-				if ( getRole(msg.author.id,msg) == 0 ){
+				if ( getRole(msg.author.id,msg.guild) == 0 ){
 					msg.channel.send("You don't have the privileges to do this. Only @LaGmin or @ScrimMaster can create a new scrim");
 					break;
 				}
@@ -262,27 +262,37 @@ bot.on('message', msg => {
 				}
 				database.ref(args[0]).once('value').then(function(snap){
 					if (snap.exists()){
-						database.ref(args[0]+'/users').once('value').then(function(snap){
-							var users = snap.val();
-							if (users == null || !users.includes(msg.author.id)) {
-								msg.channel.send("You weren't on this scrim in the first place. Are you trying to mess with me?\nHA! You thought you could trick me...");
-							} else {
+						var users = snap.val().users;
+						if (users == null || !users.includes(msg.author.id)) {
+							msg.channel.send("You weren't on this scrim in the first place. Are you trying to mess with me?\nHA! You thought you could trick me...");
+						} else {
+							var temp = [];
+							var main = false;
+							for (var i=0; i<users.length; i++){
+								if (users[i] != msg.author.id){
+									temp.push(users[i]);
+										
+								} else if (i<8)	main=true;
+							}
+							database.ref(args[0]+'/users').set(temp);
+							var confirmed = snap.val().confirmed;
+							if (confirmed != null){
 								var temp = [];
-								var main = false;
-								for (var i=0; i<users.length; i++){
-									if (users[i] != msg.author.id){
+								for (var i=0; i<confirmed.length; i++){
+									if (confirmed[i] != msg.author.id){
 										temp.push(users[i]);
 											
-									} else if (i<8)	main=true;
+									}
 								}
-								database.ref(args[0]+'/users').set(temp);
-								if (main && users.length>8){
-									msg.channel.send("Okay, I've removed you from scrim "+args[0]+"\nCongrats <@!"+temp[7]+">, now you are on the main list for scrim "+args[0]+".\nUse this command to check the people you'll be playing with\n\t!scrim users "+args[0]);
-								} else {
-									msg.channel.send("Okay, I've removed you from scrim "+args[0]+". But it makes me so sad you are leaving us :sob:");
-								}
+								console
+								database.ref(args[0]+'/confirmed').set(temp);
 							}
-						});
+							if (main && users.length>8){
+								msg.channel.send("Okay, I've removed you from scrim "+args[0]+"\nCongrats <@!"+temp[7]+">, now you are on the main list for scrim "+args[0]+".\nUse this command to check the people you'll be playing with\n\t!scrim users "+args[0]);
+							} else {
+								msg.channel.send("Okay, I've removed you from scrim "+args[0]+". But it makes me so sad you are leaving us :sob:");
+							}
+						}
 					} else {
 						msg.channel.send("There is no scrim "+args[0]+". Check the current scrim list by typing\n\t!scrim see");
 					}
@@ -377,10 +387,59 @@ bot.on('message', msg => {
 					}
 				});
 				break;
+				
+			case 'reschedule':
+				if (args.length != 3 ){
+					msg.channel.send("You need to specify which scrim you want to reschedule, like this:\n\t!scrim reschedule [id] [date] [time]\nRemember to specify time in UTC standard\nTo get the acive scrims list, use:\n\t!scrim see");
+					break;
+				}
+				if ( getRole(msg.author.id,msg.guild) == 0 ){
+					msg.channel.send("You don't have the privileges to do this. Only @LaGmin or @ScrimMaster can reschedule a scrim");
+					break;
+				}
+				database.ref(args[0]).once('value').then(function(snap){
+					if (snap.exists()){
+						var fecha = args[1].split('/');
+						var hora = args[2].split(':');
+						var date = Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0);
+						if (date > Date.now()+15*60000){
+							database.ref(args[0]).set({
+								date: args[1],
+								time: args[2],
+								users: snap.val().users
+							});
+							for (var i=0; i<jobs.length; i++){
+								if (jobs[i][0] == args[0]){
+									jobs[i][1].cancel();
+									if (jobs[i][2] != null)	jobs[i][2].cancel();
+									jobs.splice(i,1);
+									break;
+								}
+							}
+							var job1 = scheduler.scheduleJob(date,function(id, channel, guild){
+								activateScrim(id,channel,guild);
+								}.bind(null,args[0], msg.channel, msg.guild));
+							var job2 = scheduler.scheduleJob(date-15*60000,function(id, channel){
+								confirmScrim(id,channel);
+								}.bind(null,args[0], msg.channel));
+							jobs.push([args[0],job1,job2]);
+							msg.channel.send("Scrim "+args[0]+" succesfully rescheduled.");
+						} else {
+							msg.channel.send("I cant reschedule scrim "+args[0]+" to that date, please choose a date in the future, with a 15 minute margin.");
+						}
+					} else {
+						msg.channel.send("There is no scrim "+args[0]+". Check the current scrim list by typing\n\t!scrim see");
+					}
+				});
+				break;
 			
-
+			
+			case 'reschedule':
+				msg.channel.send("This is the list of available commands.\n\t!scrim see\t\tShows a list with all currently active scrims, their ids, datas and times\n\t!scrim users [id]\t\tShows the participants list for a scrim. Just replace [id] with the corresponding scrim's id\n\t!scrim join [id]\t\tJoin a scrim. Replace [id] with the corresponding scrim's id\n\t!scrim confirm [id]\t\tConfrim your assistance to a scrim. Replace [id] with the corresponding scrim's id. Can only be done 15 min before scrim, and no sooner\n\t!scrim leave [id]\t\tLeave a scrim. Replace [id] with the corresponding scrim's id\n\t!scrim help\t\tShows this message.\n\nAdvanced commands (you need extra privileges to do these):\n\t!scrim create [date] [time]\t\tCreates a new scrim. Replace [date] with the proper date following the format dd/mm/yyyy. Replace [time] with the proper time, in 24h format. [time] must be specified in UTC standard, use google for conversion to local time\n\t!scrim destroy [id]\t\tDeletes a scrim. Replace [id] wit the id from the scrim you want to delete. All data, including participants, will be deleted. Be sure of doing this, because there is no coming back.\n\t!scrim reschedule [id] [date] [time]\t\tReschedules the specified scrim to a new date. Replace [id] wit the corresponding scrim's id. Replace [date] with the proper date following the format dd/mm/yyyy. Replace [time] with the proper time, in 24h format. [time] must be specified in UTC standard, use google for conversion to local time");
+				break;
+			
 			default:
-				msg.channel.send("This is the list of available commands.\n\t!scrim see\t\tShows a list with all currently active scrims, their ids, datas and times\n\t!scrim users [id]\t\tShows the participants list for a scrim. Just replace [id] with the corresponding scrim's id\n\t!scrim join [id]\t\tJoin a scrim. Replace [id] with the corresponding scrim's id\n\t!scrim confirm [id]\t\tConfrim your assistance to a scrim. Replace [id] with the corresponding scrim's id. Can only be done 15 min before scrim, and no sooner\n\t!scrim leave [id]\t\tLeave a scrim. Replace [id] with the corresponding scrim's id\n\t!scrim help\t\tShows this message.\n\nAdvanced commands:\n\t!scrim create [date] [time]\t\tCreates a new scrim. Replace [date] with the proper date following the format dd/mm/yyyy. Replace [time] with the proper time, in 24h format. [time] must be specified in UTC standard, use google for conversion to local time\n\t!scrim destroy [id]\t\tDeletes a scrim. Replace [id] wit the id from the scrim you want to delete. All data, including participants, will be deleted. Be sure of doing this, because there is no coming back.");
+				msg.channel.send("I'm sorry, I don't know that command (maybe you had a typo?). Type this to see the command list\n\t!scrim help");
 
 
 		}
