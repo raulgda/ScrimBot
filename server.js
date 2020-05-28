@@ -156,6 +156,7 @@ bot.on('ready', () => {
 		} else {
 			console.log("No jobs to reschedulle");
 		}
+		console.log();
 	});
 });
 
@@ -163,7 +164,7 @@ bot.on('ready', () => {
 bot.on('message', msg => {
 
 	if (msg.channel.name == 'scrim') {
-	
+		
 		if (msg.content.substring(0, 7) == '!scrim '){
 
 			var args = msg.content.split(" ");
@@ -464,7 +465,8 @@ bot.on('message', msg => {
 				
 		} else if ( msg.author.id != bot.user.id && getRole(msg.author.id,msg.guild) == 0 && !hosts.includes(msg.author.id)){	
 			msg.author.send("I've deleted your message on #Scrim channel. Remember you can only post on that channel to ask things to me, using the commands, or if you're hosting a scrim (and only for 1 hour in that case). I'll remember you the list of commands, in case you forgot\n\t!scrim see\t\tShows a list with all currently active scrims, their ids, datas and times\n\t!scrim users [id]\t\tShows the participants list for a scrim. Just replace [id] with the corresponding scrim's id\n\t!scrim join [id]\t\tJoin a scrim. Replace [id] with the corresponding scrim's id\n\t!scrim confirm [id]\t\tConfrim your assistance to a scrim. Replace [id] with the corresponding scrim's id. Can only be done 15 min before scrim, and no sooner\n\t!scrim leave [id]\t\tLeave a scrim. Replace [id] with the corresponding scrim's id\n\t!scrim help\t\tShows this message.");
-			msg.delete();
+			msg.delete().then(console.log("Deleted message from "+msg.guild.members.cache.get(msg.author.id).displayName));
 		}
 	}
 });
+
