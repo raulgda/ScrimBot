@@ -6,467 +6,494 @@ function shuffle(array) {
   return array;
 }
 
-function activateScrim(id, channel, guild){
-	database.ref(id).once('value').then(function(snap){
-		if (snap.exists()){
-			database.ref(id+'/confirmed').once('value').then(function(snap){
-				if (snap.exists()){
-					waiters = snap.val();
-					players = waiters.splice(0,8);
-					var host = players[0];
-					var ma = 0;
-					for (user of players){
-						if (getRole(user,guild) > ma){
-							host = user;
-							ma = getRole(user,guild);
-						}
-					}
-					mes = "It's scrim time! Oh my god, I'm so nervous, who will win?";
-					mes += "\n\nI've sent a DM to <@!"+host+">, who will be hosting the scrim, telling him how to proceed. Please wait for his instructions, he'll tell you what to do.\nIf any problem raises, he'll tell you how to solve it, as he is on charge for this scrim.";
-					
-					guild.members.cache.get(host).send("Hey, nice to see you.\nYou'll be hosting the scrim so you'll need to make lobbies, decide teams, and keep people in orden (I know, it'll be hard haha).\n\nYou'll need to make a new lobby for each round of the scrim, check which maps you'll be playing each round on LaG server message.\nUsually we use LaG Scrim for the name of the lobby, and feel free to choose the passsword you like.\nAlso it'd be nice if you set the number of players to 14, in case anyone wants to join and spectate the scrim.\n\nNow to the difficult part:\nOnce you've created the lobby, deploy and type in chat \"/ts 0\", that will stop time so you can make the teams with no rush.\n\nOnce you've typed the command \"/ts 0\", you can tell people the name and password for the lobby and ask them to join you.\nAnd once the teams are all ready, you type the command \"/ts 1\" to set time back to normal and start playing.\n\nRemember, you are on charge here, so if any problem rises, you'll be the one solving it. But I'm sure you'll have no problem :)\n\nOh, and one last thing. Please have a look at the teams, and decide if they're fine or not. If you like them, let everyone know by saying \"We'll run with those teams\" or something like that, and if not, decide new teams over at #LaGChat and post them on #Scrims once you've decided.\n\nOkey, I think that's all, have fun!"); 
-					
-					var maps = shuffle(["Urban", "Woods", "Meltdown"]);
-					mes += "\n\nI hope you've trained hard, because here are the maps you'll be playing on:\n\tRound 1: "+maps[0]+"\n\tRound 2: "+maps[1]+"\n\tRound 3: "+maps[2]+"\n\n";
-					
-					var team2 = shuffle(players);
-					var team1 = team2.splice(team2.length/2);
-					mes += "I've made random teams, but i don't know if they're balanced:\n\tTeam 1: ";
-					for (var i=0; i<team1.length; i++){
-						mes += "<@!"+team1[i]+">  ";
-					}
-					mes += "\n\tTeam 2: ";
-					for (var i=0; i<team2.length; i++){
-						mes += "<@!"+team2[i]+">  ";
-					}
-					mes += "\nHost will decide if these teams are fine, and propose new ones over at #LaGChat if they're not. Remember, for any discussion about teams use #LaGChat, only <@!"+host+"> is allow to post here.\n";
-					
-					mes += "\nWell, enough of telling you what to do. Go out there and have fun, my brave girls and boys.\nMake LaG proud of you!";
-					
-					channel.send(mes);
-					hosts.push(host);
-					scheduler.scheduleJob(Date.now()+60*60000,function(id){
-						removeHost(id);
-						}.bind(null,host));
-				} else {
-					channel.send("You told me a scrim was happening today, but none of you lazy asses confirmed you'll be playing! I swear if I had arms, I'd puch you in the face right now");
-				}
-				database.ref(id).set({});
-				for (var i=0; i<jobs.length; i++){
-					if (jobs[i][0] == id){
-						jobs[i][1].cancel();
-						if (jobs[i][2] != null)	jobs[i][2].cancel();
-						jobs.splice(i,1);
-						break;
-					}
-				}		
-			});
-		} else {
-			channel.send("There was a scrim supossed to happen now, but I've lost its data. Ups. <@!690593135151022130> please fix.");
+
+function confirmScrim(message){
+	database.ref(message.id+'/confirmation').set('open')
+	database.ref(message.id).once('value').then(snap => {
+		var card = new Discord.MessageEmbed()
+			.setColor('#0099ff')
+			.setTitle('New scrim created')
+			.setDescription("There is a new scrim @everyone, check it out!")
+			.addFields(
+				{name: 'Date', value: snap.val().date},
+				{name: 'Time', value: snap.val().time},
+				{name: 'Players', value: userString(snap.val().users,message.guild,[])},
+				{name: 'Confirmation period', value: 'open'},
+				{name: 'Posible actions', value: calcActivation('open')}
+			)
+			.setFooter("Scrim created by "+message.guild.members.cache.get(snap.val().author).displayName)
+		message.edit(card)
+		message.react('👌')
+		if (snap.val().users!= null){
+			for (u of snap.val().users){
+				message.guild.members.cache.get(u).send("The confirmation period for the scrim you signed up for is now open! Remember to confirm your assistance or you wont be on the players list for the scrim")
+			}
 		}
-	});
-	return;
+		console.log("A scrim enter confirmation mode")
+	})
 }
 
-function confirmScrim(id, channel){
-	database.ref(id).once('value').then(function(snap){
+
+function activateScrim(message){
+	database.ref(message.id).once('value').then(function(snap){
 		if (snap.exists()){
-			database.ref(id+'/users').once('value').then(function(snap){
-				if (snap.exists()){
-					mes = "";
-					for (user of snap.val()){
-						mes += " <@!"+user+">";
-					}
-					mes += "\nSup, people. Your scrim is starting in 15 minutes. Please confirm me you'll be playing, so I can decide on teams and such. You can confirm by typing:\n\t!scrim confirm "+id;
-					channel.send(mes);
-				} else {
-					channel.send("Lmao there is a scrim in 15 min but nobody has signed up. Are you guys that lame, for real?\nAnyway, in case you want to join...\n\t!scrim join "+id+"\nAndo dont forget to confirm by typing\n\t!scrim confirm "+id);
+			var desc=""
+			if (snap.val().users!=null){
+				for (u of snap.val().users){
+					desc+="<@!"+u+">"
 				}
-			});
-		} else {
-			channel.send("There was a scrim supossed to happen in 15 min, but I've lost its data. Ups. <@!690593135151022130> please fix.");
+				desc+='\n'
+			}
+			var players=[]
+			if (snap.val().confirmed!=null)		players=snap.val().confirmed.splice(0,8)
+			var team1=shuffle(players.slice())
+			var team2=team1.splice(0,team1.length/2)
+			var others=[]
+			if (snap.val().users!=null){
+				for (u of snap.val().users){
+					if (!players.includes(u))	others.push(u)
+				}
+			}
+			var host = chooseHost(players, message.guild)
+			var maps = shuffle(["Urban", "Woods", "Meltdown"])
+			maps = maps[0]+'\n'+maps[1]+'\n'+maps[2]
+			
+			if (host[0]!=null){
+				message.guild.members.cache.get(host[0]).send("Ive given you @ScrimHost role, so you should be able to post any necesary message on #scrimm-official\nAs you'll be hosting this scrim, you need to do the following:\n\tDo any necesary change on the teams, and post them on scrim-official if you change them\n\tCreate a lobby for the scrim, and use the command \"/ts 0\" (type it on chat)\n\tPost the lobby's name and password over at #scrim-official, and tell peole to join\n\tOnce teams are done, use \"ts 1\" to set things back to normal, and enjoy your scrim\nPlease, try to delete your messages on #scrim-official when the scrim ends so we keep the channel clean")
+			}
+			
+			var card = new Discord.MessageEmbed()
+				.setColor('#ff4500')
+				.setTitle('Scrim time!')
+				.setDescription(desc+"Scrim has been activated, are you ready to play?\n(remember to listen to Host's intructions)")
+				.addFields(
+					{name: 'Host', value: host[1]},
+					{name: 'Maps', value: maps},
+					{name: 'Team 1', value: showPlayers(team1,message.guild)},
+					{name: 'Team 2', value: showPlayers(team2,message.guild)},
+					{name: 'Reserve', value: showPlayers(others,message.guild)}
+				)
+				.setFooter("Scrim created by "+message.guild.members.cache.get(snap.val().author).displayName)
+				
+			message.channel.send(card).then(msg => {
+				message.delete()
+				database.ref(message.id).set({})
+				var deletion =scheduler.scheduleJob(Date.now()+60*60000,function(msg,users,guild,host){
+					deleteScrim(msg,users,guild,host)
+					}.bind(null,msg,snap.val().users,message.guild, host[0]))
+				for (j of jobs){
+					if (j[0]==message.id){
+						j[3]=deletion
+						break
+					}
+				}
+				var hostrole = message.guild.roles.cache.find(u => u.name=='ScrimHost')
+				if (host[0]!=null)	message.guild.members.cache.get(host[0]).roles.add(hostrole)
+			})
 		}
-	});
-	return;
+		console.log("A scrim was activated")
+	})
 }
 
-function getRole(user,guild){
-	a = guild.members.cache.get(user).roles.cache.array().find(r => r.name == "LaGmin");
-	if (user == "690593135151022130")	return 2;
-	if (a != undefined)	return 1;
-	return 0;
+function deleteScrim(msg, users, guild, host){
+	for (var i=0; i<jobs.length; i++){
+		var j=jobs[i]
+		if (j[0]==msg.id){
+			if (j[1] != null)	j[1].cancel()
+			if (j[2] != null)	j[2].cancel()
+			if (j[3] != null)	j[3].cancel()
+			jobs.splice(i,1)
+			break
+		}
+	}
+	msg.delete()
+	var participant = guild.roles.cache.find(u => u.name=='ScrimParticipant')
+	var hostrole = guild.roles.cache.find(u => u.name=='ScrimHost')
+	if (users!=null){
+		database.ref('info').once('value').then(snap => {
+			snap.forEach(child => {
+				if (users.includes(child.key)){
+					if (child.val().participations<2)	guild.members.cache.get(child.key).roles.remove(participant)
+					database.ref('info/'+child.key+'/participations').set(child.val().participations-1)
+				}
+			})
+		})
+	}
+	if (host!=null)	guild.members.cache.get(host).roles.remove(hostrole)
 }
 
-function removeHost(user){
-	for (var i=0; i<hosts.length; i++){
-		if ( hosts[i] == user ){
-			hosts.splice(i,1);
+
+function chooseHost(players, guild){
+	if (players == null || players.length==0)	return [null,"None"]
+	var host = [players[0],guild.members.cache.get(players[0]).displayName]
+	for (p of players){
+		a = guild.members.cache.get(p).roles.cache.array().find(r => r.name == "LaGmin");
+		if (p=="690593135151022130" || a!=undefined){
+			host = [p,guild.members.cache.get(p).displayName]
 			break;
 		}
 	}
+	return host	
+}
+
+function showPlayers(pl,guild){
+	if (pl == null || pl.length==0)	return "None"
+	s=guild.members.cache.get(pl[0]).displayName
+	for (p of pl.splice(1)){
+		s+='\n'+guild.members.cache.get(u).displayName
+	}
+	return s
 }
 
 
-require('dotenv').config();
-var admin = require('firebase-admin');
-var serviceAccount = require('./scrimbot-7ed35-firebase-adminsdk.json');
+function userString(users,guild,confirmed){
+	if (users == null || users.length==0)	return "None"
+	s=""
+	if (confirmed != null && confirmed.includes(users[0]))	s+=':white_check_mark: '+guild.members.cache.get(users[0]).displayName
+	else s+=guild.members.cache.get(users[0]).displayName
+	for (u of users.splice(1)){
+		if (confirmed != null && confirmed.includes(u))	s+='\n:white_check_mark: '+guild.members.cache.get(u).displayName
+		else 	s+='\n'+guild.members.cache.get(u).displayName
+		
+	}
+	return s
+}
+
+
+function calcActivation(string){
+	if (string=='closed'){
+		return 'React :thumbsup: to join the scrim\nReact :alarm_clock: to see your local time for the scrim\nRemove your reaction to undo the thing'
+	}
+	return 'React :thumbsup: to join the scrim\nReact :alarm_clock: to see your local time for the scrim\nReact :ok_hand: to confirm your assistance\nRemove your reaction to undo the thing'
+}
+
+
+function edit(users, guild, confirmed, snap, packet){
+	var card = new Discord.MessageEmbed()
+		.setColor('#0099ff')
+		.setTitle('New scrim created')
+		.setDescription("There is a new scrim @everyone, check it out!")
+		.addFields(
+			{name: 'Date', value: snap.val().date},
+			{name: 'Time', value: snap.val().time},
+			{name: 'Players', value: userString(users,guild,confirmed)},
+			{name: 'Confirmation period', value: snap.val().confirmation},
+			{name: 'Posible actions', value: calcActivation(snap.val().confirmation)}
+		)
+		.setFooter("Scrim created by "+bot.guilds.cache.get(packet.d.guild_id).members.cache.get(snap.val().author).displayName)
+
+	bot.channels.cache.get(packet.d.channel_id).messages.fetch(packet.d.message_id).then(msg => {
+		msg.edit(card)
+	})
+}
+
+function formated(s){
+	return s.length==16 && s[2]=='/' && s[5]=='/' && s[10]==' ' && s[13]==':' 
+}
+
+
+require('dotenv').config()
+var admin = require('firebase-admin')
+var serviceAccount = require('./scrimbot-7ed35-firebase-adminsdk.json')
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: "https://scrimbot-7ed35.firebaseio.com"
-});
-var database = admin.database();
-var Discord = require('discord.js');
-var scheduler = require('node-schedule');
-var fs = require('fs');
+})
+var database = admin.database()
+var Discord = require('discord.js')
+var scheduler = require('node-schedule')
+var fs = require('fs')
 var jobs = []
 var hosts = []
-var bot = new Discord.Client();
+var bot = new Discord.Client()
 
-bot.login(process.env.TOKEN);
+bot.login(process.env.TOKEN)
 
 bot.on('ready', () => {
-	console.log(bot.user.username+" is up and running");
-	
+	console.log(bot.user.username+" is up and running")
 	database.ref().once('value').then(function(snap){
 		if (snap.exists()){
 			snap.forEach(function(child){
-				var val = child.val();
-				var fecha = val.date.split('/');
-				var hora = val.time.split(':');
-				var date = Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0);
-				if (date > Date.now()){
-					/*  Main code  */
-					var job1 = scheduler.scheduleJob(date,function(id,channel){
-						activateScrim(id,channel,guild);
-						}.bind(null,child.key,bot.channels.cache.get('705850717218406420'),bot.guilds.cache.get('695900254733729903')));
-					var job2 = scheduler.scheduleJob(date-15*60000,function(id,channel){
-						confirmScrim(id,channel);
-						}.bind(null,child.key,bot.channels.cache.get('705850717218406420')));
-					/*  Testing code  */
-//					var job1 = scheduler.scheduleJob(date,function(id,channel,guild){
-//						activateScrim(id,channel,guild);
-//						}.bind(null,child.key,bot.channels.cache.get('711680341550694471'),bot.guilds.cache.get("695900254733729903")));
-//					var job2 = scheduler.scheduleJob(date-15*60000,function(id,channel){
-//						confirmScrim(id,channel);
-//						}.bind(null,child.key,bot.channels.cache.get('711680341550694471')));
-					jobs.push([child.key,job1,job2]);
+				if (child.key!='info'){
+					var fecha = child.val().date.split('/');
+					var hora = child.val().time.split(':');
+					var date = Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0);
+					if (date > Date.now()){
+						bot.channels.cache.get('716689384602206238').messages.fetch(child.key).then(message =>{
+//						bot.channels.cache.get('716586938030751745').messages.fetch(child.key).then(message =>{
+							var activacion = scheduler.scheduleJob(date,function(message){
+								activateScrim(message)
+							}.bind(null,message))
+							var confirmacion = scheduler.scheduleJob(date-15*60000,function(message){
+								confirmScrim(message)
+							}.bind(null,message))
+							jobs.push([message.id,activacion,confirmacion, null])
+							console.log("Jobs for scrim "+message.id+" were recheduled")
+						})
+					}
 				}
-			});
-			console.log(jobs.length+"/"+snap.numChildren()+" jobs were succesfully reschedulled");
-		} else {
-			console.log("No jobs to reschedulle");
-		}
-		console.log();
-	});
-});
+			})
+		}	
+	})
+
+})
 
 
 bot.on('message', msg => {
 
-	if (msg.channel.name == 'scrim') {
+	if (msg.author.id != bot.user.id){
+		if (msg.channel.type=='dm'){
+			if (formated(msg.content)){
+				var args = msg.content.split(' ')
+				var fecha = args[0].split('/')
+				var hora = args[1].split(':')
+				var date = Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0)
+				database.ref('info/'+msg.author.id+'/time').set(Math.round((date-Date.now())/600000)*10)
+				msg.channel.send("Your timezone settings have been configured. You can go back and ask for your local time again, this time it will work")
+				console.log("Timezone of user "+msg.author.id+" was set")
+			} else {
+				msg.channel.send("Are you trying to change your timezone settings? I could't recognice the format you used")
+			}
+			
 		
-		if (msg.content.substring(0, 7) == '!scrim '){
+		} else if (msg.channel.name == 'scrim-official' || msg.channel.name == 'scram') {
+			if (msg.content.substring(0,13)=="!scrim create"){
+				var args = msg.content.split(' ').splice(2)
+				var fecha = args[0].split('/')
+				var hora = args[1].split(':')
+				var date = Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0)
+				if (date > Date.now()+15*60000){
+							
+					msg.delete()
+					var card = new Discord.MessageEmbed()
+						.setColor('#0099ff')
+						.setTitle('New scrim created')
+						.setDescription("There is a new scrim @everyone, check it out!")
+						.addFields(
+							{name: 'Date', value: args[0]},
+							{name: 'Time', value: args[1]},
+							{name: 'Players', value: 'None'},
+							{name: 'Confirmation period', value: 'closed'},
+							{name: 'Posible actions', value: 'React :thumbsup: to join the scrim\nReact :alarm_clock: to see your local time for the scrim\nRemove your reaction to undo the thing'}
+						)
+						.setFooter("Scrim created by "+msg.guild.members.cache.get(msg.author.id).displayName)
+						
+					msg.channel.send(card).then(message => {
+						message.react('👍')
+						message.react('⏰')
+						database.ref(message.id).set({
+							date: args[0],
+							time: args[1],
+							author: msg.author.id,
+							confirmation: 'closed'
+						})
+						
+						var activacion = scheduler.scheduleJob(date,function(message){
+							activateScrim(message)
+						}.bind(null,message))
+						var confirmacion = scheduler.scheduleJob(date-15*60000,function(message){
+							confirmScrim(message)
+						}.bind(null,message))
+						jobs.push([message.id,activacion,confirmacion, null])
+						console.log("A scrim was created")
+					})
+				}
+			} else if (msg.content.substring(0,13)=="!scrim delete"){
+				var args = msg.content.split(' ').splice(2)
+				database.ref(args[0]).once('value').then(snap => {
+					if (snap.exists()){
+						bot.channels.cache.get(msg.channel.id).messages.fetch(args[0]).then(mes => {
+							deleteScrim(mes, snap.val().users, mes.guild, null)
+							msg.delete()
+							database.ref(args[0]).set({})
+							console.log("A scrim was deleted")
+						})
+					}
+				})
+			} else if (msg.content.substring(0,17)=="!scrim reschedule"){
+				var args = msg.content.split(' ').splice(2)
+				if (args.length==3){
+					var fecha = args[1].split('/')
+					var hora = args[2].split(':')
+					var date = Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0)
+					if (date > Date.now()+15*60000){
+						database.ref(args[0]).once('value').then(function(snap){
+							if (snap.exists()){
+								var users = snap.val().users
+								var confirmed = snap.val().confirmed
+								
+								var guild = msg.guild
+								var card = new Discord.MessageEmbed()
+									.setColor('#0099ff')
+									.setTitle('New scrim created')
+									.setDescription("There is a new scrim @everyone, check it out!")
+									.addFields(
+										{name: 'Date', value: args[1]},
+										{name: 'Time', value: args[2]},
+										{name: 'Players', value: userString(users,guild,confirmed)},
+										{name: 'Confirmation period', value: snap.val().confirmation},
+										{name: 'Posible actions', value: calcActivation(snap.val().confirmation)}
+									)
+									.setFooter("Scrim created by "+guild.members.cache.get(snap.val().author).displayName)
 
-			var args = msg.content.split(" ");
-			var cmd = args[1];
-			args = args.splice(2);
-			switch(cmd) {
+								msg.channel.messages.fetch(args[0]).then(mes => {
+									mes.edit(card)
+									database.ref(mes.id+'/date').set(args[1])
+									database.ref(mes.id+'/time').set(args[2])
+									for (var i=0; i<jobs.length; i++){
+										if (jobs[i][0] == args[0]){
+											jobs[i][1].cancel();
+											if (jobs[i][2] != null)	jobs[i][2].cancel();
+											if (jobs[i][3] != null)	jobs[i][2].cancel();
+											jobs.splice(i,1);
+											break;
+										}
+									}
+									var activacion = scheduler.scheduleJob(date,function(message){
+										activateScrim(message)
+									}.bind(null,mes))
+									var confirmacion = scheduler.scheduleJob(date-15*60000,function(message){
+										confirmScrim(message)
+									}.bind(null,mes))
+									jobs.push([mes.id,activacion,confirmacion, null])
+									console.log("A scrim was rescheduled")
+									msg.delete()
+								})
+							}
+						})
+					}
+				}
+			}
 			
-				case 'create':
-					if (args.length != 2 ){
-						msg.channel.send("You need to specify the date and time of the scrim\n\t!scrim create [date] [time]\nRemember, time follows UTC standard");
-						break;
-					}
-					if ( getRole(msg.author.id,msg.guild) == 0 ){
-						msg.channel.send("You don't have the privileges to do this. Only @LaGmin or @[LaG]FairyPrincess can create a new scrim");
-						break;
-					}
-					database.ref().once('value').then(function(snap){
-						var json = snap.toJSON()
-						var id = 0;
-						while (json != null && json[id] != undefined)	id++;
-						var fecha = args[0].split('/');
-						var hora = args[1].split(':');
-						var date = Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0);
-						if (date > Date.now()+15*60000){
-							database.ref(id).set({
-								date: args[0],
-								time: args[1]
-							});
-							var job1 = scheduler.scheduleJob(date,function(id, channel, guild){
-								activateScrim(id,channel,guild);
-								}.bind(null,id, msg.channel, msg.guild));
-							var job2 = scheduler.scheduleJob(date-15*60000,function(id, channel){
-								confirmScrim(id,channel);
-								}.bind(null,id, msg.channel));
-							jobs.push([id,job1,job2]);
-							msg.channel.send("A new scrim has been created, check it out!\n\tID: "+id+"\tDATE: "+args[0]+"\tTIME: "+args[1]+"\nBe fast and join now @everyone, because there is an 8 player limit. Join yourself by typing:\n\t!scrim join "+id);
-						} else {
-							msg.channel.send("Scrim creation needs a 15 minute margin, please choose a date further in the future");
-						}
-					});
-					break;
-					
-					
-				case 'destroy':
-					if (args.length != 1 ){
-						msg.channel.send("You need to specify which scrim to eliminate\n\t!scrim destroy [id]\nRemember, time follows UTC standard");
-						break;
-					}
-					if ( getRole(msg.author.id,msg) == 0 ){
-						msg.channel.send("You don't have the privileges to do this. Only @LaGmin or @[LaG]FairyPrincess can destroy a scrim");
-						break;
-					}
-					database.ref(args[0]).once('value').then(function(snap){
-						if (snap.exists()){
-							database.ref(args[0]).set({});
-							for (var i=0; i<jobs.length; i++){
-								if (jobs[i][0] == args[0]){
-									jobs[i][1].cancel();
-									if (jobs[i][2] != null)	jobs[i][2].cancel();
-									jobs.splice(i,1);
-									break;
-								}
-							}
-							//////////////////////////
-						} else {
-							msg.channel.send("There is no scrim "+args[0]+". Check the current scrim list by typing\n\t!scrim see");
-						}
-					});
-					break;
-						
-						
-				case 'join':
-					if (args.length != 1 ){
-						msg.channel.send("You need to specify which scrim you want to join, like this:\n\t!scrim join [id]\nTo know the id for your desired scrim, use:\n\t!scrim see");
-						break;
-					}
-					database.ref(args[0]).once('value').then(function(snap){
-						if (snap.exists()){
-							database.ref(args[0]+'/users').once('value').then(function(snap){
-								var users = snap.val();
-								if (users == null)	users = [];
-								if (users.includes(msg.author.id)){
-									msg.channel.send("Don't be greedy, you were already in this scrim!");
-								} else  {
-									users.push(msg.author.id);
-									database.ref(args[0]+'/users').set(users);
-									if (users.length > 8){
-										msg.channel.send("As this scrim has already 8 people playing, I've put you in the waiting list. In case anyone leaves, or they dont confirm their assistance, i'll make sure to move you to the main list.\nYou still need to confirm your assistance anyway 15 min before scrim starts by typing\n\t!scrim confirm "+args[0]+"\n(Don't worry, I'll ping you 15 min before the scrim in case you forget)");
-									} else {
-										mes = "Congratulations! You've joined this scrim. These are the participants for scrim "+args[0]+":\n";
-										for (user of users){
-											mes += "\t"+msg.guild.members.cache.get(user).displayName+"\n"
-										}
-										mes += "Remember you still need to confirm your assistance 15 min before scrim starts by typing\n\t!scrim confirm "+args[0]+"\n(Don't worry, I'll ping you 15 min before the scrim in case you forget)";
-										msg.channel.send(mes);
-									}
-								}
-							});
-						} else {
-							msg.channel.send("There is no scrim "+args[0]+". Check the current scrim list by typing\n\t!scrim see");
-						}
-					});
-					break;
-					
-						
-				case 'leave':
-					if (args.length != 1 ){
-						msg.channel.send("You need to specify which scrim you want to leave, like this:\n\t!scrim leave [id]\nTo know the id for your desired scrim, use:\n\t!scrim see");
-						break;
-					}
-					database.ref(args[0]).once('value').then(function(snap){
-						if (snap.exists()){
-							var users = snap.val().users;
-							if (users == null || !users.includes(msg.author.id)) {
-								msg.channel.send("You weren't on this scrim in the first place. Are you trying to mess with me?\nHA! You thought you could trick me...");
-							} else {
-								var temp = [];
-								var main = false;
-								for (var i=0; i<users.length; i++){
-									if (users[i] != msg.author.id){
-										temp.push(users[i]);
-											
-									} else if (i<8)	main=true;
-								}
-								database.ref(args[0]+'/users').set(temp);
-								var confirmed = snap.val().confirmed;
-								if (confirmed != null){
-									var temp = [];
-									for (var i=0; i<confirmed.length; i++){
-										if (confirmed[i] != msg.author.id){
-											temp.push(users[i]);
-												
-										}
-									}
-									console
-									database.ref(args[0]+'/confirmed').set(temp);
-								}
-								if (main && users.length>8){
-									msg.channel.send("Okay, I've removed you from scrim "+args[0]+"\nCongrats <@!"+temp[7]+">, now you are on the main list for scrim "+args[0]+".\nUse this command to check the people you'll be playing with\n\t!scrim users "+args[0]);
-								} else {
-									msg.channel.send("Okay, I've removed you from scrim "+args[0]+". But it makes me so sad you are leaving us :sob:");
-								}
-							}
-						} else {
-							msg.channel.send("There is no scrim "+args[0]+". Check the current scrim list by typing\n\t!scrim see");
-						}
-					});
-					break;
-				
-					
-				case 'see':
-					database.ref().once('value').then(function(snap){
-						var mes = "";
-						if (!snap.exists()){
-							mes += "Currently there are no programmed scrims";
-						} else {
-							mes += "This is the list of current scrims:\n";
-							snap.forEach(function(child){
-								var pl = 0;
-								if (child.val().users != null){
-									if (child.val().users.length<8) pl=child.val().users.length;
-									else pl = 8
-								} 
-								mes += "\tID: "+child.key+"\tDATE: "+child.val().date+"\tTIME: "+child.val().time+"\tPlayers: "+pl+"\n";
-							});
-							mes += "(Remember times follows UTC standard, use google to check your local time equivalence)\nTo see which users have joined a scrim, use the command\n\t!scrim users [id]";
-						}
-						msg.channel.send(mes);
-					});
-					break;
-					
-				case 'users':
-					if (args.length != 1 ){
-						msg.channel.send("You need to specify which scrim you want to show its participants, like this:\n\t!scrim users [id]\nTo know the id for your desired scrim, use:\n\t!scrim see");
-						break;
-					}
-					database.ref(args[0]).once('value').then(function(snap){
-						if (snap.exists()){
-							database.ref(args[0]+'/users').once('value').then(function(snap){
-								if (!snap.exists()) {
-									msg.channel.send("Oh no! This scrim is empty. be the first to join by typing\n\t!scrim join "+args[0]);
-								} else {
-									var waiters = snap.val();
-									var users = waiters.splice(0,8);
-									mes = "This is the participant list for scrim "+args[0]+"\n";
-									for (user of users){
-										mes += "\t"+msg.guild.members.cache.get(user).displayName+"\n";
-									}
-									if (users.length < 8) {
-										mes += "Would you like to join us? Just type\n\t!scrim join "+args[0];
-									} else if (waiters.length > 0) {
-										mes += "And these are the people on the waiting list, in case some player fails\n";
-										for (user of waiters) {
-											mes += "\t"+msg.guild.members.cache.get(user).displayName+"\n";
-										}
-									}
-									msg.channel.send(mes);
-								}
-							});
-						} else {
-							msg.channel.send("There is no scrim "+args[0]+". Check the current scrim list by typing\n\t!scrim see");
-						}
-					});
-					break;
-					
-					
-				case 'confirm':
-					if (args.length != 1 ){
-						msg.channel.send("You need to specify which scrim you want to confirm your assistance to, like this:\n\t!scrim confirm [id]\nTo know the id for your desired scrim, use:\n\t!scrim see");
-						break;
-					}
-					database.ref(args[0]).once('value').then(function(snap){
-						if (snap.exists()){
-							var users = snap.val().users;
-							if (users == null)	users = [];
-							if (users.includes(msg.author.id)){
-								var fecha = snap.val().date.split('/');
-								var hora = snap.val().time.split(':');
-								var date = Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0);
-								var current = Date.now()+15*60000;
-								if (current > date){
-									var confirmed = snap.val().confirmed;
-									if (confirmed == null)	confirmed = [];
-									confirmed.push(msg.author.id);
-									database.ref(args[0]+'/confirmed').set(confirmed);
-									msg.channel.send("Your assistance has been confirmed. Thank you.");
-								} else {
-									msg.channel.send("You can only confirm your assistance 15 min before the scrim, not sooner. I'll ping you at the time, don't worry");
-								}
-							} else  {
-								msg.channel.send("I can't confirm your assistance as you weren´t signed up for this scrim. You can join by typing:\n\t!scrim join "+args[0]);
-							}
-						} else {
-							msg.channel.send("There is no scrim "+args[0]+". Check the current scrim list by typing\n\t!scrim see");
-						}
-					});
-					break;
-					
-				case 'reschedule':
-					if (args.length != 3 ){
-						msg.channel.send("You need to specify which scrim you want to reschedule, like this:\n\t!scrim reschedule [id] [date] [time]\nRemember to specify time in UTC standard\nTo get the acive scrims list, use:\n\t!scrim see");
-						break;
-					}
-					if ( getRole(msg.author.id,msg.guild) == 0 ){
-						msg.channel.send("You don't have the privileges to do this. Only @LaGmin or @[LaG]FairyPrincess can reschedule a scrim");
-						break;
-					}
-					database.ref(args[0]).once('value').then(function(snap){
-						if (snap.exists()){
-							var fecha = args[1].split('/');
-							var hora = args[2].split(':');
-							var date = Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0);
-							if (date > Date.now()+15*60000){
-								database.ref(args[0]).set({
-									date: args[1],
-									time: args[2],
-									users: snap.val().users
-								});
-								for (var i=0; i<jobs.length; i++){
-									if (jobs[i][0] == args[0]){
-										jobs[i][1].cancel();
-										if (jobs[i][2] != null)	jobs[i][2].cancel();
-										jobs.splice(i,1);
-										break;
-									}
-								}
-								var job1 = scheduler.scheduleJob(date,function(id, channel, guild){
-									activateScrim(id,channel,guild);
-									}.bind(null,args[0], msg.channel, msg.guild));
-								var job2 = scheduler.scheduleJob(date-15*60000,function(id, channel){
-									confirmScrim(id,channel);
-									}.bind(null,args[0], msg.channel));
-								jobs.push([args[0],job1,job2]);
-								msg.channel.send("Scrim "+args[0]+" succesfully rescheduled.");
-							} else {
-								msg.channel.send("I cant reschedule scrim "+args[0]+" to that date, please choose a date in the future, with a 15 minute margin.");
-							}
-						} else {
-							msg.channel.send("There is no scrim "+args[0]+". Check the current scrim list by typing\n\t!scrim see");
-						}
-					});
-					break;
-				
-				
-				case 'help':
-					if (args[0] === "advanced"){
-						msg.channel.send("Advanced commands (only @LaGmin or @[LaG]FairyPrincess can use them):\n\t!scrim create [date] [time]\t\tCreates a new scrim. Replace [date] with the proper date following the format dd/mm/yyyy. Replace [time] with the proper time, in 24h format. [time] must be specified in UTC standard, use google for conversion to local time\n\t!scrim destroy [id]\t\tDeletes a scrim. Replace [id] wit the id from the scrim you want to delete. All data, including participants, will be deleted. Be sure of doing this, because there is no coming back.\n\t!scrim reschedule [id] [date] [time]\t\tReschedules the specified scrim to a new date. Replace [id] wit the corresponding scrim's id. Replace [date] with the proper date following the format dd/mm/yyyy. Replace [time] with the proper time, in 24h format. [time] must be specified in UTC standard, use google for conversion to local time");
-					} else {
-						msg.channel.send("This is the list of available commands.\n\t!scrim see\t\tShows a list with all currently active scrims, their ids, datas and times\n\t!scrim users [id]\t\tShows the participants list for a scrim. Just replace [id] with the corresponding scrim's id\n\t!scrim join [id]\t\tJoin a scrim. Replace [id] with the corresponding scrim's id\n\t!scrim confirm [id]\t\tConfrim your assistance to a scrim. Replace [id] with the corresponding scrim's id. Can only be done 15 min before scrim, and no sooner\n\t!scrim leave [id]\t\tLeave a scrim. Replace [id] with the corresponding scrim's id\n\t!scrim help\t\tShows this message.");
-					}
-					break;
-				
-				default:
-					msg.channel.send("I'm sorry, I don't know that command (maybe you had a typo?). Type this to see the command list\n\t!scrim help");
-
-			} 
-			
-				
-		} else if ( msg.author.id != bot.user.id && getRole(msg.author.id,msg.guild) == 0 && !hosts.includes(msg.author.id)){	
-			msg.author.send("I've deleted your message on #Scrim channel. Remember you can only post on that channel to ask things to me, using the commands, or if you're hosting a scrim (and only for 1 hour in that case). I'll remember you the list of commands, in case you forgot\n\t!scrim see\t\tShows a list with all currently active scrims, their ids, datas and times\n\t!scrim users [id]\t\tShows the participants list for a scrim. Just replace [id] with the corresponding scrim's id\n\t!scrim join [id]\t\tJoin a scrim. Replace [id] with the corresponding scrim's id\n\t!scrim confirm [id]\t\tConfrim your assistance to a scrim. Replace [id] with the corresponding scrim's id. Can only be done 15 min before scrim, and no sooner\n\t!scrim leave [id]\t\tLeave a scrim. Replace [id] with the corresponding scrim's id\n\t!scrim help\t\tShows this message.");
-			msg.delete().then(console.log("Deleted message from "+msg.guild.members.cache.get(msg.author.id).displayName));
 		}
 	}
-});
+	
+})
+
+bot.on("raw", packet =>{
+
+	if (packet.t == 'MESSAGE_REACTION_ADD' && packet.d.user_id!='710859802170884227' && (packet.d.channel_id=='716689384602206238' || packet.d.channel_id=='716586938030751745')){
+
+		switch (packet.d.emoji.name){
+		
+			case '👍':
+				database.ref(packet.d.message_id).once('value').then(function(snap){
+					if (snap.exists()){
+						var users=snap.val().users
+						var confirmed=snap.val().confirmed
+						var guild = bot.guilds.cache.get(packet.d.guild_id)
+						if (users == null)	users = []
+						if (confirmed == null)	confirmed = []
+						if (!users.includes(packet.d.user_id)){
+							users.push(packet.d.user_id)
+							database.ref(packet.d.message_id+'/users').set(users)
+						}
+						edit(users, guild, confirmed, snap, packet)
+					}
+				})
+				var participant = bot.guilds.cache.get(packet.d.guild_id).roles.cache.find(u => u.name=='ScrimParticipant')
+				bot.guilds.cache.get(packet.d.guild_id).members.cache.get(packet.d.user_id).roles.add(participant)
+				database.ref('info/'+packet.d.user_id+'/participations').once('value').then(snap => {
+					if (snap.exists()){
+						database.ref('info/'+packet.d.user_id+'/participations').set(snap.val()+1)
+					} else {
+						database.ref('info/'+packet.d.user_id+'/participations').set(1)
+					}
+				})
+				console.log("User "+packet.d.user_id+" joined a scrim")
+				break
+				
+			case '👌':
+				database.ref(packet.d.message_id).once('value').then(function(snap){
+					if (snap.exists() && snap.val().confirmation == 'open'){
+						var users=snap.val().users
+						var confirmed=snap.val().confirmed
+						var guild = bot.guilds.cache.get(packet.d.guild_id)
+						if (users == null)	users = []
+						if (confirmed == null)	confirmed = []
+						if (users.includes(packet.d.user_id) && !confirmed.includes(packet.d.user_id)){
+							confirmed.push(packet.d.user_id)
+							database.ref(packet.d.message_id+'/confirmed').set(confirmed)
+						}
+						edit(users, guild, confirmed, snap, packet)
+						console.log("User "+packet.d.user_id+" confirmed for a scrim")
+					}
+				})
+				break
+				
+			case '⏰':
+				database.ref('info/'+packet.d.user_id+'/time').once('value').then(function(snap){
+					if (snap.exists()){
+						database.ref(packet.d.message_id).once('value').then( snap2 => {
+							var fecha = snap2.val().date.split('/')
+							var hora = snap2.val().time.split(':')
+							var date = new Date(Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0)+snap.val()*60000)
+							bot.guilds.cache.get(packet.d.guild_id).members.cache.get(packet.d.user_id).user.send("This is the date and time from the scrim in your country\n\t"+date.getUTCDate()+'/'+date.getUTCMonth()+'/'+date.getUTCFullYear()+' '+date.getUTCHours()+':'+date.getUTCMinutes())
+						})					
+					} else {
+						bot.guilds.cache.get(packet.d.guild_id).members.cache.get(packet.d.user_id).user.send(
+							"I'm sorry, but your timezone data is not on my database. To configure it, just tell me what is your current time (follow this syntax: dd/mm/yyyy hh:mm, time in 24h format please)"
+						)
+					}
+					console.log("User "+packet.d.user_id+" asked to see local time")
+				})
+				break
+				
+		}
+	}
+	
+	if (packet.t == 'MESSAGE_REACTION_REMOVE' && packet.d.user_id!='710859802170884227' && (packet.d.channel_id=='716689384602206238' || packet.d.channel_id=='716586938030751745')){
+
+		switch (packet.d.emoji.name){
+		
+			case '👍':
+				database.ref(packet.d.message_id).once('value').then(function(snap){
+					if (snap.exists()){
+						var users=snap.val().users
+						var confirmed=snap.val().confirmed
+						var guild = bot.guilds.cache.get(packet.d.guild_id)
+						if (users == null)	users = []
+						if (confirmed == null)	confirmed = []
+						if (users.includes(packet.d.user_id)){
+							users=users.filter((u,a,b) => u!=packet.d.user_id)
+							confirmed=confirmed.filter((u,a,b) => u!=packet.d.user_id)
+							database.ref(packet.d.message_id+'/users').set(users)
+							database.ref(packet.d.message_id+'/confirmed').set(confirmed)
+						}
+						edit(users, guild, confirmed, snap, packet)
+						console.log("User "+packet.d.user_id+" left a scrim")
+					}
+				})
+
+				var participant = bot.guilds.cache.get(packet.d.guild_id).roles.cache.find(u => u.name=='ScrimParticipant')
+				database.ref('info/'+packet.d.user_id+'/participations').once('value').then(snap => {
+					if (snap.val()<2)	bot.guilds.cache.get(packet.d.guild_id).members.cache.get(packet.d.user_id).roles.remove(participant)
+					database.ref('info/'+packet.d.user_id+'/participations').set(snap.val()-1)
+				})
+				break
+				
+			case '👌':
+				database.ref(packet.d.message_id).once('value').then(function(snap){
+					if (snap.exists() && snap.val().confirmation == 'open'){
+						var users=snap.val().users
+						var confirmed=snap.val().confirmed
+						var guild = bot.guilds.cache.get(packet.d.guild_id)
+						if (users == null)	users = []
+						if (confirmed == null)	confirmed = []
+						if (users.includes(packet.d.user_id) && confirmed.includes(packet.d.user_id)){
+							confirmed=confirmed.filter((u,a,b) => u!=packet.d.user_id)
+							database.ref(packet.d.message_id+'/confirmed').set(confirmed)
+						}
+						edit(users, guild, confirmed, snap, packet)
+						console.log("User "+packet.d.user_id+" unconfirmed for a scrim")
+					}
+				})
+				break
+				
+		}
+	}
+
+
+
+})
 
