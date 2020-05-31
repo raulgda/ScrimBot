@@ -59,7 +59,7 @@ function activateScrim(message){
 			maps = maps[0]+'\n'+maps[1]+'\n'+maps[2]
 			
 			if (host[0]!=null){
-				message.guild.members.cache.get(host[0]).send("Ive given you @ScrimHost role, so you should be able to post any necesary message on #scrimm-official\nAs you'll be hosting this scrim, you need to do the following:\n\tDo any necesary change on the teams, and post them on scrim-official if you change them\n\tCreate a lobby for the scrim, and use the command \"/ts 0\" (type it on chat)\n\tPost the lobby's name and password over at #scrim-official, and tell peole to join\n\tOnce teams are done, use \"ts 1\" to set things back to normal, and enjoy your scrim\nPlease, try to delete your messages on #scrim-official when the scrim ends so we keep the channel clean")
+				message.guild.members.cache.get(host[0]).send("Ive given you @ScrimHost role, so you should be able to post any necesary message on #scrimm-official\nAs you'll be hosting this scrim, you need to do the following:\n\tDo any necesary change on the teams, and post them on scrim-official if you change them\n\tCreate a lobby for the scrim, and use the command \"/ts 0\" (type it on chat)\n\tPost the lobby's name and password over at #scrim-official, and tell peole to join\n\tOnce teams are done, use \"/ts 1\" to set things back to normal, and enjoy your scrim\nPlease, try to delete your messages on #scrim-official when the scrim ends so we keep the channel clean")
 			}
 			
 			var card = new Discord.MessageEmbed()
