@@ -42,7 +42,6 @@ function activateScrim(message){
 				for (u of snap.val().users){
 					desc+="<@!"+u+">"
 				}
-				desc+='\n'
 			}
 			var players=[]
 			if (snap.val().confirmed!=null)		players=snap.val().confirmed.splice(0,8)
@@ -65,7 +64,7 @@ function activateScrim(message){
 			var card = new Discord.MessageEmbed()
 				.setColor('#ff4500')
 				.setTitle('Scrim time!')
-				.setDescription(desc+"Scrim has been activated, are you ready to play?\n(remember to listen to Host's intructions)")
+				.setDescription("Scrim has been activated, are you ready to play?\n(remember to listen to Host's intructions)")
 				.addFields(
 					{name: 'Host', value: host[1]},
 					{name: 'Maps', value: maps},
@@ -75,7 +74,8 @@ function activateScrim(message){
 				)
 				.setFooter("Scrim created by "+message.guild.members.cache.get(snap.val().author).displayName)
 				
-			message.channel.send(card).then(msg => {
+			message.channel.send(desc).then(msg => {
+				msg.edit(card)
 				message.delete()
 				database.ref(message.id).set({})
 				var deletion =scheduler.scheduleJob(Date.now()+60*60000,function(msg,users,guild,host){
@@ -278,7 +278,8 @@ bot.on('message', msg => {
 						)
 						.setFooter("Scrim created by "+msg.guild.members.cache.get(msg.author.id).displayName)
 						
-					msg.channel.send(card).then(message => {
+					msg.channel.send("@everyone").then(message => {
+						message.edit(card)
 						message.react('👍')
 						message.react('⏰')
 						database.ref(message.id).set({
@@ -428,7 +429,7 @@ bot.on("raw", packet =>{
 							var fecha = snap2.val().date.split('/')
 							var hora = snap2.val().time.split(':')
 							var date = new Date(Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0)+snap.val()*60000)
-							bot.guilds.cache.get(packet.d.guild_id).members.cache.get(packet.d.user_id).user.send("This is the date and time from the scrim in your country\n\t"+date.getUTCDate()+'/'+date.getUTCMonth()+'/'+date.getUTCFullYear()+' '+date.getUTCHours()+':'+date.getUTCMinutes())
+							bot.guilds.cache.get(packet.d.guild_id).members.cache.get(packet.d.user_id).user.send("This is the date and time from the scrim in your country\n\t"+date.getUTCDate()+'/'+(date.getUTCMonth()+1)+'/'+date.getUTCFullYear()+' '+date.getUTCHours()+':'+date.getUTCMinutes())
 						})					
 					} else {
 						bot.guilds.cache.get(packet.d.guild_id).members.cache.get(packet.d.user_id).user.send(
