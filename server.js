@@ -16,7 +16,7 @@ function confirmScrim(message){
 			.setDescription("There is a new scrim @everyone, check it out!")
 			.addFields(
 				{name: 'Date', value: snap.val().date},
-				{name: 'Time', value: snap.val().time},
+				{name: 'Time', value: snap.val().time+' utc'},
 				{name: 'Players', value: userString(snap.val().users,message.guild,[])},
 				{name: 'Confirmation period', value: 'open'},
 				{name: 'Posible actions', value: calcActivation('open')}
@@ -175,7 +175,7 @@ function edit(users, guild, confirmed, snap, packet){
 		.setDescription("There is a new scrim @everyone, check it out!")
 		.addFields(
 			{name: 'Date', value: snap.val().date},
-			{name: 'Time', value: snap.val().time},
+			{name: 'Time', value: snap.val().time+' utc'},
 			{name: 'Players', value: userString(users,guild,confirmed)},
 			{name: 'Confirmation period', value: snap.val().confirmation},
 			{name: 'Posible actions', value: calcActivation(snap.val().confirmation)}
@@ -219,8 +219,8 @@ bot.on('ready', () => {
 					var hora = child.val().time.split(':');
 					var date = Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0);
 					if (date > Date.now()){
-						bot.channels.cache.get('716689384602206238').messages.fetch(child.key).then(message =>{
-//						bot.channels.cache.get('716586938030751745').messages.fetch(child.key).then(message =>{
+		/*Main read*/				bot.channels.cache.get('716689384602206238').messages.fetch(child.key).then(message =>{
+//		/*Test read*/				bot.channels.cache.get('716586938030751745').messages.fetch(child.key).then(message =>{
 							var activacion = scheduler.scheduleJob(date,function(message){
 								activateScrim(message)
 							}.bind(null,message))
@@ -271,7 +271,7 @@ bot.on('message', msg => {
 						.setDescription("There is a new scrim @everyone, check it out!")
 						.addFields(
 							{name: 'Date', value: args[0]},
-							{name: 'Time', value: args[1]},
+							{name: 'Time', value: args[1]+' utc'},
 							{name: 'Players', value: 'None'},
 							{name: 'Confirmation period', value: 'closed'},
 							{name: 'Posible actions', value: 'React :thumbsup: to join the scrim\nReact :alarm_clock: to see your local time for the scrim\nRemove your reaction to undo the thing'}
@@ -330,7 +330,7 @@ bot.on('message', msg => {
 									.setDescription("There is a new scrim @everyone, check it out!")
 									.addFields(
 										{name: 'Date', value: args[1]},
-										{name: 'Time', value: args[2]},
+										{name: 'Time', value: args[2]+' utc'},
 										{name: 'Players', value: userString(users,guild,confirmed)},
 										{name: 'Confirmation period', value: snap.val().confirmation},
 										{name: 'Posible actions', value: calcActivation(snap.val().confirmation)}
