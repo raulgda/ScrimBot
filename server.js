@@ -228,7 +228,7 @@ bot.on('ready', () => {
 								confirmScrim(message)
 							}.bind(null,message))
 							jobs.push([message.id,activacion,confirmacion, null])
-							console.log("Jobs for scrim "+message.id+" were recheduled")
+							console.log("Jobs for scrim "+message.id+" created")
 						})
 					}
 				}
@@ -429,7 +429,7 @@ bot.on("raw", packet =>{
 							var fecha = snap2.val().date.split('/')
 							var hora = snap2.val().time.split(':')
 							var date = new Date(Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0)+snap.val()*60000)
-							bot.guilds.cache.get(packet.d.guild_id).members.cache.get(packet.d.user_id).user.send("This is the date and time from the scrim in your country\n\t"+date.getUTCDate()+'/'+(date.getUTCMonth()+1)+'/'+date.getUTCFullYear()+' '+date.getUTCHours()+':'+date.getUTCMinutes())
+							bot.guilds.cache.get(packet.d.guild_id).members.cache.get(packet.d.user_id).user.send("This is the date and time from the scrim in your country\n\t"+String(date.getUTCDate()).padStart(2,'0')+'/'+String(date.getUTCMonth()+1).padStart(2,'0')+'/'+date.getUTCFullYear()+'\t'+String(date.getUTCHours()).padStart(2,'0')+':'+String(date.getUTCMinutes()).padStart(2,'0'))
 						})					
 					} else {
 						bot.guilds.cache.get(packet.d.guild_id).members.cache.get(packet.d.user_id).user.send(
