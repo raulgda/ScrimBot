@@ -82,9 +82,9 @@ function activateScrim(message){
 				msg.edit(card)
 				message.delete()
 				database.ref(message.id).set({})
-				var deletion =scheduler.scheduleJob(Date.now()+90*60000,function(msg,users,guild,host){
-					deleteScrim(msg,users,guild,host)
-				}.bind(null,msg,snap.val().users,message.guild, host[0]))
+				var deletion =scheduler.scheduleJob(Date.now()+90*60000,function(id,users,guild,host){
+					deleteScrim(id,users,guild,host)
+				}.bind(null,message.id,snap.val().users,message.guild, host[0]))
 				for (j of jobs){
 					if (j[0]==message.id){
 						j[3]=deletion
@@ -99,10 +99,10 @@ function activateScrim(message){
 	})
 }
 
-function deleteScrim(msg, users, guild, host){
+function deleteScrim(id, users, guild, host){
 	for (var i=0; i<jobs.length; i++){
 		var j=jobs[i]
-		if (j[0]==msg.id){
+		if (j[0]==id){
 			if (j[1] != null)	j[1].cancel()
 			if (j[2] != null)	j[2].cancel()
 			if (j[3] != null)	j[3].cancel()
@@ -227,7 +227,7 @@ bot.on('ready', () => {
 							var activacion = scheduler.scheduleJob(date,function(message){
 								activateScrim(message)
 							}.bind(null,message))
-							var confirmacion = scheduler.scheduleJob(date-1*60000,function(message){
+							var confirmacion = scheduler.scheduleJob(date-15*60000,function(message){
 								confirmScrim(message)
 							}.bind(null,message))
 							jobs.push([message.id,activacion,confirmacion, null])
@@ -265,7 +265,7 @@ bot.on('message', msg => {
 				var fecha = args[0].split('/')
 				var hora = args[1].split(':')
 				var date = Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0)
-				if (date > Date.now()+1*60000){
+				if (date > Date.now()+15*60000){
 							
 					msg.delete()
 					var card = new Discord.MessageEmbed()
@@ -320,7 +320,7 @@ bot.on('message', msg => {
 					var fecha = args[1].split('/')
 					var hora = args[2].split(':')
 					var date = Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0)
-					if (date > Date.now()+1*60000){
+					if (date > Date.now()+15*60000){
 						database.ref(args[0]).once('value').then(function(snap){
 							if (snap.exists()){
 								var users = snap.val().users
@@ -356,7 +356,7 @@ bot.on('message', msg => {
 									var activacion = scheduler.scheduleJob(date,function(message){
 										activateScrim(message)
 									}.bind(null,mes))
-									var confirmacion = scheduler.scheduleJob(date-1*60000,function(message){
+									var confirmacion = scheduler.scheduleJob(date-15*60000,function(message){
 										confirmScrim(message)
 									}.bind(null,mes))
 									jobs.push([mes.id,activacion,confirmacion, null])
