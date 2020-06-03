@@ -45,6 +45,7 @@ function activateScrim(message){
 			}
 			var players=[]
 			if (snap.val().confirmed!=null)		players=snap.val().confirmed.splice(0,8)
+			console.log(players)
 			var team1=shuffle(players.slice())
 			var team2=team1.splice(0,team1.length/2)
 			console.log(team1)
