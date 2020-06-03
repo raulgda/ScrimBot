@@ -142,8 +142,10 @@ function chooseHost(players, guild){
 function showPlayers(pl,guild){
 	if (pl == null || pl.length==0)	return "None"
 	s=guild.members.cache.get(pl[0]).displayName
+	console.log(s)
 	for (var i=1; i<pl.length; i++){
 		s+='\n'+guild.members.cache.get(pl[i]).displayName
+		console.log(guild.members.cache.get(pl[i]).displayName)
 	}
 	return s
 }
