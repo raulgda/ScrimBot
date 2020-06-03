@@ -45,11 +45,8 @@ function activateScrim(message){
 			}
 			var players=[]
 			if (snap.val().confirmed!=null)		players=snap.val().confirmed.splice(0,8)
-			console.log(players)
 			var team1=shuffle(players.slice())
 			var team2=team1.splice(0,team1.length/2)
-			console.log(team1)
-			console.log(team2)
 			var others=[]
 			if (snap.val().users!=null){
 				for (u of snap.val().users){
@@ -142,10 +139,8 @@ function chooseHost(players, guild){
 function showPlayers(pl,guild){
 	if (pl == null || pl.length==0)	return "None"
 	s=guild.members.cache.get(pl[0]).displayName
-	console.log(s)
 	for (var i=1; i<pl.length; i++){
 		s+='\n'+guild.members.cache.get(pl[i]).displayName
-		console.log(guild.members.cache.get(pl[i]).displayName)
 	}
 	return s
 }
