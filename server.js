@@ -47,6 +47,8 @@ function activateScrim(message){
 			if (snap.val().confirmed!=null)		players=snap.val().confirmed.splice(0,8)
 			var team1=shuffle(players.slice())
 			var team2=team1.splice(0,team1.length/2)
+			console.log(team1)
+			console.log(team2)
 			var others=[]
 			if (snap.val().users!=null){
 				for (u of snap.val().users){
@@ -58,14 +60,15 @@ function activateScrim(message){
 			maps = maps[0]+'\n'+maps[1]+'\n'+maps[2]
 			
 			if (host[0]!=null){
-				message.guild.members.cache.get(host[0]).send("Ive given you @ScrimHost role, so you should be able to post any necesary message on #scrimm-official\nAs you'll be hosting this scrim, you need to do the following:\n\tDo any necesary change on the teams, and post them on scrim-official if you change them\n\tCreate a lobby for the scrim, and use the command \"/ts 0\" (type it on chat)\n\tPost the lobby's name and password over at #scrim-official, and tell peole to join\n\tOnce teams are done, use \"/ts 1\" to set things back to normal, and enjoy your scrim\nPlease, try to delete your messages on #scrim-official when the scrim ends so we keep the channel clean")
+				message.guild.members.cache.get(host[0]).send("I've given you @ScrimHost role, so you should be able to post any necesary message on #scrim-official\nAs you'll be hosting this scrim, you need to do the following:\n\tDo any necesary changes on the teams, and post them on scrim-official if you change them\n\tCreate a lobby for the scrim, and use the command \"/ts 0\" (type it on chat)\n\tPost the lobby's name and password over at #scrim-official, and tell peole to join\n\tOnce teams are done, use \"/ts 1\" to set things back to normal, and enjoy your scrim\nPlease, try to delete your messages on #scrim-official when the scrim ends so we keep the channel clean")
 			}
 			
 			var card = new Discord.MessageEmbed()
 				.setColor('#ff4500')
 				.setTitle('Scrim time!')
-				.setDescription("Scrim has been activated, are you ready to play?\n(remember to listen to Host's intructions)")
+				.setDescription("Scrim has been activated, are you ready to play?")
 				.addFields(
+					{name: 'Rules', value: "Follow host command, dont make decisions on your own\nIn case of doubt, whatever is posted on scrim-official is law\nUse #scrim-channel to talk to other members of the scrim, including the host\nGuns allowed ar displayed at #Scrim-Rules"},
 					{name: 'Host', value: host[1]},
 					{name: 'Maps', value: maps},
 					{name: 'Team 1', value: showPlayers(team1,message.guild)},
@@ -78,9 +81,9 @@ function activateScrim(message){
 				msg.edit(card)
 				message.delete()
 				database.ref(message.id).set({})
-				var deletion =scheduler.scheduleJob(Date.now()+60*60000,function(msg,users,guild,host){
+				var deletion =scheduler.scheduleJob(Date.now()+90*60000,function(msg,users,guild,host){
 					deleteScrim(msg,users,guild,host)
-					}.bind(null,msg,snap.val().users,message.guild, host[0]))
+				}.bind(null,msg,snap.val().users,message.guild, host[0]))
 				for (j of jobs){
 					if (j[0]==message.id){
 						j[3]=deletion
@@ -106,7 +109,6 @@ function deleteScrim(msg, users, guild, host){
 			break
 		}
 	}
-	msg.delete()
 	var participant = guild.roles.cache.find(u => u.name=='ScrimParticipant')
 	var hostrole = guild.roles.cache.find(u => u.name=='ScrimHost')
 	if (users!=null){
@@ -139,8 +141,8 @@ function chooseHost(players, guild){
 function showPlayers(pl,guild){
 	if (pl == null || pl.length==0)	return "None"
 	s=guild.members.cache.get(pl[0]).displayName
-	for (p of pl.splice(1)){
-		s+='\n'+guild.members.cache.get(u).displayName
+	for (var i=1; i<pl.length; i++){
+		s+='\n'+guild.members.cache.get(pl[i]).displayName
 	}
 	return s
 }
@@ -219,12 +221,12 @@ bot.on('ready', () => {
 					var hora = child.val().time.split(':');
 					var date = Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0);
 					if (date > Date.now()){
-		/*Main read*/				bot.channels.cache.get('716689384602206238').messages.fetch(child.key).then(message =>{
-//		/*Test read*/				bot.channels.cache.get('716586938030751745').messages.fetch(child.key).then(message =>{
+//		/*Main read*/				bot.channels.cache.get('716689384602206238').messages.fetch(child.key).then(message =>{
+		/*Test read*/				bot.channels.cache.get('716586938030751745').messages.fetch(child.key).then(message =>{
 							var activacion = scheduler.scheduleJob(date,function(message){
 								activateScrim(message)
 							}.bind(null,message))
-							var confirmacion = scheduler.scheduleJob(date-15*60000,function(message){
+							var confirmacion = scheduler.scheduleJob(date-1*60000,function(message){
 								confirmScrim(message)
 							}.bind(null,message))
 							jobs.push([message.id,activacion,confirmacion, null])
@@ -262,7 +264,7 @@ bot.on('message', msg => {
 				var fecha = args[0].split('/')
 				var hora = args[1].split(':')
 				var date = Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0)
-				if (date > Date.now()+15*60000){
+				if (date > Date.now()+1*60000){
 							
 					msg.delete()
 					var card = new Discord.MessageEmbed()
@@ -317,7 +319,7 @@ bot.on('message', msg => {
 					var fecha = args[1].split('/')
 					var hora = args[2].split(':')
 					var date = Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0)
-					if (date > Date.now()+15*60000){
+					if (date > Date.now()+1*60000){
 						database.ref(args[0]).once('value').then(function(snap){
 							if (snap.exists()){
 								var users = snap.val().users
@@ -353,7 +355,7 @@ bot.on('message', msg => {
 									var activacion = scheduler.scheduleJob(date,function(message){
 										activateScrim(message)
 									}.bind(null,mes))
-									var confirmacion = scheduler.scheduleJob(date-15*60000,function(message){
+									var confirmacion = scheduler.scheduleJob(date-1*60000,function(message){
 										confirmScrim(message)
 									}.bind(null,mes))
 									jobs.push([mes.id,activacion,confirmacion, null])
