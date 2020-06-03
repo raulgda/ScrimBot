@@ -224,8 +224,8 @@ bot.on('ready', () => {
 					var hora = child.val().time.split(':');
 					var date = Date.UTC(fecha[2],fecha[1]-1,fecha[0],hora[0],hora[1],0);
 					if (date > Date.now()){
-//		/*Main read*/				bot.channels.cache.get('716689384602206238').messages.fetch(child.key).then(message =>{
-		/*Test read*/				bot.channels.cache.get('716586938030751745').messages.fetch(child.key).then(message =>{
+		/*Main read*/				bot.channels.cache.get('716689384602206238').messages.fetch(child.key).then(message =>{
+//		/*Test read*/				bot.channels.cache.get('716586938030751745').messages.fetch(child.key).then(message =>{
 							var activacion = scheduler.scheduleJob(date,function(message){
 								activateScrim(message)
 							}.bind(null,message))
