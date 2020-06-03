@@ -119,6 +119,7 @@ function deleteScrim(id, users, guild, host){
 			})
 		})
 	}
+	console.log("Roles have being removed")
 	if (host!=null)	guild.members.cache.get(host).roles.remove(hostrole)
 }
 
