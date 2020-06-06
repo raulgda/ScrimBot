@@ -391,6 +391,7 @@ bot.on("raw", packet =>{
 							database.ref(packet.d.message_id+'/users').set(users)
 						}
 						edit(users, guild, confirmed, snap, packet)
+						console.log("User "+packet.d.user_id+" joined a scrim")
 					}
 				})
 				var participant = bot.guilds.cache.get(packet.d.guild_id).roles.cache.find(u => u.name=='ScrimParticipant')
@@ -402,7 +403,6 @@ bot.on("raw", packet =>{
 						database.ref('info/'+packet.d.user_id+'/participations').set(1)
 					}
 				})
-				console.log("User "+packet.d.user_id+" joined a scrim")
 				break
 				
 			case '👌':
